@@ -346,7 +346,7 @@ function catSelect(ip, port, curId){
   const opts=allCats().map(c=>`<option value="${c.id}" ${c.id===curId?"selected":""}>${esc(c.name)}</option>`).join("");
   const stop="event.stopPropagation();";
   return `<select class="catpick" title="归类" onclick="${stop}" onmousedown="${stop}"
-    onchange="event.preventDefault();${stop}assignCat('${ip}',${port},this.value)">${defOpt}${opts}</select>`;
+    onchange="${stop}assignCat('${ip}',${port},this.value)">${defOpt}${opts}</select>`;
 }
 // Display name: user rename wins, else identified product, else nmap name.
 function svcName(ip, s){
