@@ -187,6 +187,91 @@
     border-radius: 6px; padding: 3px 7px; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
   details summary { cursor: pointer; color: var(--muted); margin: 10px 0; }
+  
+  /* Docker dynamic stats indicator styling */
+  .ds-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    vertical-align: middle;
+    margin-left: 6px;
+    font-size: 11px;
+  }
+  .ds-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--panel-2);
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .ds-label {
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 9px;
+    text-transform: uppercase;
+  }
+  .ds-track {
+    width: 32px;
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+    display: inline-block;
+  }
+  .ds-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  /* Shimmer / light sweep effect */
+  .ds-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.45) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: ds-shimmer 2s infinite;
+  }
+  @keyframes ds-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  /* Load level coloring */
+  .ds-danger {
+    background-color: var(--danger);
+    animation: ds-pulse 0.8s infinite alternate;
+  }
+  .ds-warning {
+    background-color: #f59e0b;
+  }
+  .ds-normal {
+    background-color: var(--accent-2);
+  }
+  @keyframes ds-pulse {
+    0% { opacity: 0.75; }
+    100% { opacity: 1; filter: drop-shadow(0 0 2px var(--danger)); }
+  }
+  .ds-val {
+    font-weight: 600;
+    font-size: 10.5px;
+  }
+  .ds-status {
+    font-size: 11px;
+    color: var(--muted);
+  }
 </style>
 </head>
 <body>
@@ -501,6 +586,68 @@ function svcChip(ip, s, showHidden){
     : `<span class="${cls}" ${style} ${title}>${inner}${catSelect(ip,s.port,(STATE.settings.svc_cats||{})[ip+":"+s.port])}${pen}${eye}${del}${ext}</span>`;
 }
 
+function renderDockerStats(ct) {
+  if (!ct) return "";
+  let html = `<span class="ds-group" onclick="event.stopPropagation();" onmousedown="event.stopPropagation();">`;
+  let hasStats = false;
+  
+  // CPU 解析
+  if (ct.cpu) {
+    const match = ct.cpu.match(/([0-9.]+)\s*%/);
+    if (match) {
+      const val = parseFloat(match[1]);
+      let cls = "ds-normal";
+      if (val > 80) cls = "ds-danger";
+      else if (val > 40) cls = "ds-warning";
+      html += `
+        <span class="ds-item" title="CPU 占用率: ${val}%">
+          <span class="ds-label">CPU</span>
+          <span class="ds-track">
+            <span class="ds-fill ${cls}" style="width: ${Math.min(val, 100)}%"></span>
+          </span>
+          <span class="ds-val">${val}%</span>
+        </span>
+      `;
+      hasStats = true;
+    }
+  }
+  
+  // Mem 解析
+  if (ct.mem) {
+    const pctMatch = ct.mem.match(/\(([0-9.]+)%\)/);
+    const mbMatch = ct.mem.match(/([0-9.]+)\s*MB/);
+    if (pctMatch && mbMatch) {
+      const val = parseFloat(pctMatch[1]);
+      const mb = parseFloat(mbMatch[1]);
+      let cls = "ds-normal";
+      if (val > 85) cls = "ds-danger";
+      else if (val > 55) cls = "ds-warning";
+      html += `
+        <span class="ds-item" title="内存占用率: ${val}% (已用: ${mb}MB)">
+          <span class="ds-label">MEM</span>
+          <span class="ds-track">
+            <span class="ds-fill ${cls}" style="width: ${Math.min(val, 100)}%"></span>
+          </span>
+          <span class="ds-val">${mb}M</span>
+        </span>
+      `;
+      hasStats = true;
+    } else if (mbMatch) {
+      const mb = parseFloat(mbMatch[1]);
+      html += `
+        <span class="ds-item" title="内存已用: ${mb}MB">
+          <span class="ds-label">MEM</span>
+          <span class="ds-val">${mb}M</span>
+        </span>
+      `;
+      hasStats = true;
+    }
+  }
+  
+  html += `</span>`;
+  return hasStats ? html : "";
+}
+
 function containerRow(ip, ct){
   const pub=(ct.ports||[]).filter(p=>p.public);
   const links=pub.map(p=>{
@@ -512,21 +659,20 @@ function containerRow(ip, ct){
     .map(p=>`<span class="cport int" title="未发布到宿主机">${p.private}</span>`).join("");
   const stopped=ct.state && ct.state!=="running";
   
-  let stats = "";
+  let statsHtml = "";
   if (!stopped) {
-    const parts = [];
-    if (ct.cpu) parts.push(`CPU: ${ct.cpu}`);
-    if (ct.mem) parts.push(`Mem: ${ct.mem}`);
-    if (ct.status) parts.push(ct.status.replace("Up ", ""));
-    stats = parts.join(" · ");
+    statsHtml = renderDockerStats(ct);
+    if (ct.status) {
+      statsHtml += ` <span class="ds-status" style="margin-left:4px">· ${esc(ct.status.replace("Up ", ""))}</span>`;
+    }
   } else {
-    stats = `已停止 (${ct.state || "exited"})`;
+    statsHtml = `<span class="ds-status">已停止 (${ct.state || "exited"})</span>`;
   }
   
   return `<div class="ct ${stopped?"stopped":""}">
     <span class="ct-name">🐳 ${esc(ct.name)}</span>
     <div class="ct-ports">${links||internal||`<span class="cport int">—</span>`}</div>
-    <span class="ct-img" style="margin-top:2px">${esc(ct.image||"")} ${stats ? `· ${esc(stats)}` : ""}</span>
+    <span class="ct-img" style="margin-top:2px">${esc(ct.image||"")} ${statsHtml ? `· ${statsHtml}` : ""}</span>
   </div>`;
 }
 
@@ -567,7 +713,7 @@ function navView(hosts, showHidden){
     if(!its.length) return "";
     return `<div class="cat-section">
       <div class="cat-head"><span class="swatch" style="background:${c.color}"></span>
-        <h2>${esc(c.name)}</h2><span class="count">${its.length}</span></div>
+         <h2>${esc(c.name)}</h2><span class="count">${its.length}</span></div>
       <div class="apps">${its.map(appCard).join("")}</div></div>`;
   }).join("");
 }
@@ -582,12 +728,9 @@ function appCard(it){
     const ct = it.container;
     const stopped = ct.state && ct.state !== "running";
     if (!stopped) {
-      const parts = [];
-      if (ct.cpu) parts.push(`CPU ${ct.cpu}`);
-      if (ct.mem) parts.push(`Mem ${ct.mem}`);
-      dockerStats = parts.join(" · ");
+      dockerStats = renderDockerStats(ct);
     } else {
-      dockerStats = `已停止 (${ct.state || "exited"})`;
+      dockerStats = `<span class="ds-status" style="margin-left:6px">已停止 (${ct.state || "exited"})</span>`;
     }
   }
   
@@ -601,7 +744,7 @@ function appCard(it){
       ${ext}
     </div>
     <div class="an">${esc(it.name)}</div>
-    <div class="au">${esc(it.url)} ${dockerStats ? `<span style="font-size:11px;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums">${esc(dockerStats)}</span>` : ""}</div>
+    <div class="au">${esc(it.url)} ${dockerStats || ""}</div>
   </div>`;
 }
 
