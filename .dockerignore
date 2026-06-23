@@ -1,0 +1,11 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.db
+*.db-*
+data/
+lanscout.db
+AGENTS.md
+.claude/
+README.md

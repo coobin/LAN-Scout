@@ -17,39 +17,49 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import config
 import db
 import scanner
+import settings as settings_mod
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
 
-def run_scan(subnet: str | None = None) -> None:
+def run_scan() -> None:
     """Execute one scan and persist it. Swallows errors into the scans table."""
-    subnet = subnet or config.SUBNET
-    scan_id = db.start_scan(subnet)
+    s = settings_mod.get()
+    targets = s["targets"]
+    scan_id = db.start_scan(targets)
     try:
-        hosts = scanner.scan(subnet)
+        hosts = scanner.scan(targets, s["ports"], s["service_detection"],
+                             s["timing"])
         db.save_results(hosts)
         db.finish_scan(scan_id, len(hosts))
-        print(f"[scan] {subnet}: {len(hosts)} host(s) up")
+        print(f"[scan] {targets}: {len(hosts)} host(s) up")
     except Exception as e:  # noqa: BLE001 - record any failure for the UI
         db.finish_scan(scan_id, 0, str(e))
         print(f"[scan] error: {e}")
 
 
-def trigger_scan_async(subnet: str | None = None) -> bool:
+def trigger_scan_async() -> bool:
     """Kick off a scan in a worker thread if one isn't already running."""
     if scanner.is_scanning():
         return False
-    threading.Thread(target=run_scan, args=(subnet,), daemon=True).start()
+    threading.Thread(target=run_scan, daemon=True).start()
     return True
 
 
 def scheduler_loop() -> None:
-    if config.SCAN_INTERVAL <= 0:
-        return
+    """Re-read the interval from settings each tick so UI changes take effect."""
+    elapsed = 0
+    step = 5
     while True:
-        time.sleep(config.SCAN_INTERVAL)
-        if not scanner.is_scanning():
-            run_scan()
+        time.sleep(step)
+        elapsed += step
+        interval = settings_mod.get()["interval"]
+        if interval and elapsed >= interval:
+            elapsed = 0
+            if not scanner.is_scanning():
+                run_scan()
+        elif not interval:
+            elapsed = 0
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -111,6 +121,9 @@ class Handler(BaseHTTPRequestHandler):
                 started = trigger_scan_async()
                 return self._json({"started": started,
                                    "scanning": scanner.is_scanning()})
+            if self.path == "/api/settings":
+                updated = settings_mod.update(self._read_json())
+                return self._json({"settings": updated})
             if self.path.startswith("/api/host/"):
                 ip = self.path[len("/api/host/"):]
                 body = self._read_json()
@@ -125,11 +138,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _state(self) -> None:
         self._json({
-            "config": {
-                "subnet": config.SUBNET,
-                "interval": config.SCAN_INTERVAL,
-                "service_detection": config.SERVICE_DETECTION,
-            },
+            "settings": settings_mod.get(),
             "scanning": scanner.is_scanning(),
             "nmap_available": scanner.nmap_available(),
             "last_scan": db.last_scan(),
@@ -151,9 +160,10 @@ def main() -> None:
 
     httpd = ThreadingHTTPServer((config.HOST, config.PORT), Handler)
     url = f"http://{config.HOST}:{config.PORT}"
+    s = settings_mod.get()
     print(f"LAN Scout running at {url}")
-    print(f"  subnet={config.SUBNET}  interval={config.SCAN_INTERVAL}s  "
-          f"sV={'on' if config.SERVICE_DETECTION else 'off'}")
+    print(f"  targets={s['targets']}  interval={s['interval']}s  "
+          f"sV={'on' if s['service_detection'] else 'off'}")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

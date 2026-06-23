@@ -1,0 +1,26 @@
+services:
+  lan-scout:
+    build: .
+    image: lan-scout:latest
+    container_name: lan-scout
+    restart: unless-stopped
+
+    # host networking is required to actually see the LAN. Works on Linux
+    # hosts. On Docker Desktop (macOS/Windows) host networking is limited —
+    # there, prefer running natively: `python3 server.py`.
+    network_mode: host
+
+    # NET_RAW/NET_ADMIN let nmap do privileged ARP discovery + SYN scans,
+    # which find far more devices than an unprivileged connect scan.
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+    environment:
+      # Override the auto-detected subnet to match your network.
+      - LANSCOUT_SUBNET=192.168.1.0/24
+      - LANSCOUT_PORT=8770
+      - LANSCOUT_DB=/data/lanscout.db
+
+    volumes:
+      - ./data:/data

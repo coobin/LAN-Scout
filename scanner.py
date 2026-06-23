@@ -26,28 +26,33 @@ def nmap_available() -> bool:
     return shutil.which("nmap") is not None
 
 
-def build_command(subnet: str) -> list[str]:
+def build_command(targets: str, ports: str, service_detection: bool,
+                  timing: str) -> list[str]:
     # Run as root → let nmap use ARP host discovery + a SYN scan, which is the
     # accurate way to enumerate devices on a local segment. Unprivileged → fall
     # back to a TCP connect scan (no sudo needed, but misses ping-silent hosts).
     privileged = hasattr(os, "geteuid") and os.geteuid() == 0
-    cmd = ["nmap", "--open", f"-T{config.TIMING}"]
+    cmd = ["nmap", "--open", f"-T{timing}"]
     cmd.append("-sS" if privileged else "-sT")
-    if config.SERVICE_DETECTION:
+    if service_detection:
         cmd += ["-sV", "--version-light"]
-    if config.PORTS and config.PORTS != "-":
-        cmd += ["-p", config.PORTS]
-    cmd += ["-oX", "-", subnet]
+    if ports and ports != "-":
+        cmd += ["-p", ports]
+    # Targets are validated upstream (settings._TARGET_RE) and passed as
+    # separate argv tokens, so no shell and no flag injection.
+    cmd += ["-oX", "-"]
+    cmd += [t for t in targets.split() if t]
     return cmd
 
 
-def scan(subnet: str | None = None) -> list[dict]:
+def scan(targets: str, ports: str = config.PORTS,
+         service_detection: bool = config.SERVICE_DETECTION,
+         timing: str = config.TIMING) -> list[dict]:
     """Run nmap and return a list of host dicts. Raises on failure.
 
     Caller is responsible for persisting the result. The scan is serialized:
     concurrent callers raise RuntimeError rather than piling up nmap processes.
     """
-    subnet = subnet or config.SUBNET
     if not nmap_available():
         raise RuntimeError("nmap is not installed or not on PATH")
     if not _scan_lock.acquire(blocking=False):
@@ -55,7 +60,7 @@ def scan(subnet: str | None = None) -> list[dict]:
     _scanning.set()
     try:
         proc = subprocess.run(
-            build_command(subnet),
+            build_command(targets, ports, service_detection, timing),
             capture_output=True, text=True, timeout=1800,
         )
         if proc.returncode != 0 and not proc.stdout.strip():

@@ -79,3 +79,44 @@ DB_PATH = os.environ.get(
     "LANSCOUT_DB",
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "lanscout.db"),
 )
+
+# The values above are *seed defaults*. Once the app runs, user-editable
+# settings (subnet, ports, interval, categories, …) live in the database and
+# override these — see settings.py. Environment variables only set the initial
+# values on a fresh database.
+
+# Default service categories used to group/sort/colour discovered services.
+# A service joins the first category that lists its port OR its nmap name.
+# Fully user-editable at runtime via the settings panel.
+DEFAULT_CATEGORIES = [
+    {"id": "web", "name": "Web / 控制台", "color": "#4f8cff", "order": 1,
+     "visible": True,
+     "ports": [80, 81, 443, 3000, 5000, 5001, 5601, 7860, 8000, 8006, 8008,
+               8080, 8081, 8086, 8088, 8096, 8123, 8443, 8888, 9000, 9001,
+               9090, 9443, 3128, 32400, 8500, 15672, 10000],
+     "services": ["http", "https", "http-proxy", "http-alt", "https-alt",
+                  "ssl/http"]},
+    {"id": "remote", "name": "远程访问", "color": "#a78bfa", "order": 2,
+     "visible": True,
+     "ports": [22, 23, 3389, 5900],
+     "services": ["ssh", "telnet", "ms-wbt-server", "rdp", "vnc"]},
+    {"id": "db", "name": "数据库 / 缓存", "color": "#f59e0b", "order": 3,
+     "visible": True,
+     "ports": [1433, 1521, 3306, 5432, 5984, 6379, 9200, 11211, 27017],
+     "services": ["mysql", "postgresql", "redis", "mongodb", "ms-sql-s",
+                  "oracle", "elasticsearch", "memcached", "couchdb"]},
+    {"id": "file", "name": "文件 / 共享", "color": "#34d399", "order": 4,
+     "visible": True,
+     "ports": [21, 139, 445, 873, 2049, 990],
+     "services": ["ftp", "ftps", "smb", "microsoft-ds", "netbios-ssn", "nfs",
+                  "rsync"]},
+    {"id": "infra", "name": "基础设施", "color": "#22d3ee", "order": 5,
+     "visible": True,
+     "ports": [53, 123, 161, 514, 5353, 6443, 2375, 2376, 8200],
+     "services": ["domain", "dns", "snmp", "syslog", "ntp", "docker",
+                  "kubernetes"]},
+    {"id": "media", "name": "媒体 / 物联网", "color": "#fb7185", "order": 6,
+     "visible": True,
+     "ports": [554, 1883, 5060, 7070, 8009, 32400],
+     "services": ["rtsp", "mqtt", "sip", "plex", "airplay"]},
+]

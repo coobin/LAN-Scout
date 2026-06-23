@@ -65,7 +65,28 @@ def init() -> None:
                 host_count  INTEGER,
                 error       TEXT
             );
+
+            CREATE TABLE IF NOT EXISTS settings (
+                key   TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
             """
+        )
+
+
+def get_setting(key: str) -> str | None:
+    with _conn() as c:
+        row = c.execute(
+            "SELECT value FROM settings WHERE key=?", (key,)
+        ).fetchone()
+        return row["value"] if row else None
+
+
+def set_setting(key: str, value: str) -> None:
+    with _lock, _conn() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            (key, value),
         )
 
 

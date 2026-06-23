@@ -8,42 +8,43 @@
   :root {
     --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --line: #272c38;
     --text: #e6e9ef; --muted: #8b93a7; --accent: #4f8cff; --accent-2: #2dd4bf;
-    --up: #34d399; --down: #6b7280; --warn: #fbbf24; --danger: #f87171;
-    --radius: 14px;
+    --up: #34d399; --down: #6b7280; --danger: #f87171; --radius: 14px;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font: 15px/1.5 -apple-system, "Segoe UI", Roboto, "PingFang SC", sans-serif;
-  }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, "Segoe UI", Roboto, "PingFang SC", sans-serif; }
   a { color: inherit; }
-  header {
-    position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px);
+  header { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px);
     background: rgba(15,17,21,.82); border-bottom: 1px solid var(--line);
-    padding: 14px 24px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
-  }
+    padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
   .logo { width: 26px; height: 26px; border-radius: 8px;
     background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
-  .meta { color: var(--muted); font-size: 13px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .meta { color: var(--muted); font-size: 13px; display: flex; gap: 14px; flex-wrap: wrap; }
   .meta b { color: var(--text); font-weight: 600; }
   .spacer { flex: 1; }
-  .search { background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
-    padding: 9px 14px; border-radius: 10px; min-width: 220px; outline: none; }
-  .search:focus { border-color: var(--accent); }
-  button.scan {
-    background: var(--accent); color: #fff; border: 0; padding: 10px 18px;
-    border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px;
-  }
-  button.scan:disabled { opacity: .55; cursor: progress; }
-  main { padding: 22px 24px 60px; max-width: 1500px; margin: 0 auto; }
-  .stats { display: flex; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+  input, select { font: inherit; }
+  .search, select.ctl { background: var(--panel-2); border: 1px solid var(--line);
+    color: var(--text); padding: 9px 12px; border-radius: 10px; outline: none; }
+  .search { min-width: 200px; }
+  .search:focus, select.ctl:focus { border-color: var(--accent); }
+  button { font: inherit; cursor: pointer; }
+  .btn { background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    padding: 9px 14px; border-radius: 10px; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #fff; border: 0; font-weight: 600; }
+  .btn.primary:disabled { opacity: .55; cursor: progress; }
+  main { padding: 20px 24px 60px; max-width: 1500px; margin: 0 auto; }
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { background: var(--panel-2); border: 0; color: var(--muted); padding: 8px 14px; }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .toggle { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13.5px; }
+  .stats { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
   .stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 14px 18px; min-width: 120px; }
-  .stat .n { font-size: 26px; font-weight: 700; }
-  .stat .l { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
-  .grid { display: grid; gap: 16px;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
+    padding: 13px 18px; min-width: 110px; }
+  .stat .n { font-size: 24px; font-weight: 700; } .stat .l { color: var(--muted); font-size: 12px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
     padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
   .card.down { opacity: .5; }
@@ -53,25 +54,56 @@
   .card.down .dot { background: var(--down); box-shadow: none; }
   .ip { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .host-sub { color: var(--muted); font-size: 12.5px; word-break: break-all; }
+  .vendor { color: var(--muted); font-size: 11.5px; }
   .label-input { background: transparent; border: 0; border-bottom: 1px dashed transparent;
-    color: var(--accent-2); font-weight: 600; font-size: 14px; outline: none; width: 100%;
-    padding: 2px 0; }
+    color: var(--accent-2); font-weight: 600; font-size: 14px; outline: none; width: 100%; padding: 2px 0; }
   .label-input::placeholder { color: var(--muted); font-weight: 400; }
   .label-input:hover, .label-input:focus { border-bottom-color: var(--line); }
   .services { display: flex; flex-wrap: wrap; gap: 8px; }
   .svc { display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
-    background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
-    padding: 6px 10px; font-size: 13px; }
-  .svc.link { border-color: #2e3d5c; }
-  .svc.link:hover { border-color: var(--accent); background: #20283a; }
+    background: var(--panel-2); border: 1px solid var(--line); border-left-width: 3px;
+    border-radius: 9px; padding: 6px 9px; font-size: 13px; }
+  .svc.link:hover { background: #20283a; }
+  .svc.hidden { opacity: .4; border-style: dashed; }
   .svc .port { font-weight: 700; font-variant-numeric: tabular-nums; }
-  .svc .name { color: var(--muted); }
-  .svc .arrow { color: var(--accent); }
+  .svc .name { color: var(--muted); } .svc .arrow { margin-left: 1px; }
+  .eye { background: none; border: 0; color: var(--muted); padding: 0 0 0 3px; font-size: 13px; opacity: .6; }
+  .eye:hover { opacity: 1; color: var(--text); }
   .no-svc { color: var(--muted); font-size: 12.5px; }
   .empty { text-align: center; color: var(--muted); padding: 80px 20px; }
   .banner { background: #3a1d1d; border: 1px solid var(--danger); color: #fca5a5;
     padding: 12px 16px; border-radius: 10px; margin-bottom: 18px; }
-  .vendor { color: var(--muted); font-size: 11.5px; }
+  .cat-section { margin-bottom: 26px; }
+  .cat-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .cat-head .swatch { width: 12px; height: 12px; border-radius: 4px; }
+  .cat-head h2 { font-size: 16px; margin: 0; }
+  .cat-head .count { color: var(--muted); font-size: 13px; }
+  .svc-card { background: var(--panel); border: 1px solid var(--line); border-left-width: 3px;
+    border-radius: 12px; padding: 11px 14px; text-decoration: none; display: flex; flex-direction: column; gap: 3px; }
+  .svc-card:hover { border-color: var(--accent); }
+  .svc-card .h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .svc-card .nm { font-weight: 600; } .svc-card .pt { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .svc-card .who { color: var(--muted); font-size: 12.5px; word-break: break-all; }
+  /* modal */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none;
+    align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 50; overflow: auto; }
+  .overlay.show { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    width: 100%; max-width: 720px; padding: 24px; }
+  .modal h2 { margin: 0 0 6px; } .modal .hint { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  .field { margin-bottom: 14px; } .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+  .field input[type=text], .field input[type=number] { width: 100%; background: var(--panel-2);
+    border: 1px solid var(--line); color: var(--text); padding: 9px 11px; border-radius: 9px; outline: none; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cat-row { display: grid; grid-template-columns: 22px 1.3fr 1fr 1.4fr auto; gap: 8px; align-items: center;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin-bottom: 8px; }
+  .cat-row input[type=text] { width: 100%; background: var(--bg); border: 1px solid var(--line);
+    color: var(--text); padding: 6px 8px; border-radius: 7px; outline: none; font-size: 13px; }
+  .cat-row input[type=color] { width: 28px; height: 28px; border: 0; background: none; padding: 0; }
+  .cat-row .mini { background: none; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 6px; padding: 3px 7px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  details summary { cursor: pointer; color: var(--muted); margin: 10px 0; }
 </style>
 </head>
 <body>
@@ -80,140 +112,288 @@
   <div class="meta" id="meta"></div>
   <span class="spacer"></span>
   <input class="search" id="search" placeholder="搜索 IP / 名称 / 服务 / 厂商…">
-  <button class="scan" id="scanBtn" onclick="triggerScan()">立即扫描</button>
+  <button class="btn" onclick="openSettings()">⚙ 设置</button>
+  <button class="btn primary" id="scanBtn" onclick="triggerScan()">立即扫描</button>
 </header>
 <main>
   <div id="banner"></div>
   <div class="stats" id="stats"></div>
-  <div class="grid" id="grid"></div>
+  <div class="toolbar">
+    <div class="seg" id="viewSeg">
+      <button data-view="host" onclick="setView('host')">按主机</button>
+      <button data-view="category" onclick="setView('category')">按分类</button>
+    </div>
+    <label class="toggle" id="sortWrap">排序
+      <select class="ctl" id="hostSort" onchange="setSort(this.value)">
+        <option value="ip">IP</option>
+        <option value="label">名称</option>
+        <option value="services">服务数</option>
+        <option value="last_seen">最近发现</option>
+      </select>
+    </label>
+    <label class="toggle"><input type="checkbox" id="showHidden" onchange="render()"> 显示已隐藏的服务</label>
+  </div>
+  <div id="content"></div>
   <div class="empty" id="empty" style="display:none">还没有数据。点击「立即扫描」开始探测局域网。</div>
 </main>
 
-<script>
-let STATE = { hosts: [], config: {}, scanning: false };
-let pollTimer = null;
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <h2>设置</h2>
+    <div class="hint">修改后点「保存」生效；网段/间隔的更改下次扫描时应用。</div>
+    <div class="field"><label>扫描目标（网段 / IP / 范围，支持多个，空格或逗号分隔）</label>
+      <input type="text" id="f_targets" placeholder="192.168.1.0/24 10.0.0.0/24"></div>
+    <div class="row2">
+      <div class="field"><label>端口列表（逗号分隔，- 表示 top-1000）</label>
+        <input type="text" id="f_ports"></div>
+      <div class="field"><label>自动扫描间隔（分钟，0 关闭）</label>
+        <input type="number" id="f_interval" min="0" step="1"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>nmap 计时模板 (0-5)</label>
+        <input type="number" id="f_timing" min="0" max="5"></div>
+      <div class="field"><label style="margin-top:26px"><input type="checkbox" id="f_sv"> 服务/版本探测 (-sV)</label></div>
+    </div>
+    <details open>
+      <summary>服务分类（排序 / 颜色 / 显示）</summary>
+      <div id="catEditor"></div>
+      <button class="btn" onclick="addCat()">+ 新增分类</button>
+    </details>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeSettings()">取消</button>
+      <button class="btn primary" onclick="saveSettingsForm()">保存</button>
+    </div>
+  </div>
+</div>
 
-const WEB = { http: "http", https: "https", "https-alt": "https",
-  "http-proxy": "http", "http-alt": "http", "ssl/http": "https",
-  ssl: "https", caldav: "http", webcache: "http" };
-// Ports we know are web UIs even when nmap can't name the service.
-const WEB_PORTS = new Set([80,81,443,3000,5000,5001,5601,7860,8000,8006,8008,
-  8080,8081,8086,8088,8096,8123,8443,8888,9000,9001,9090,9443,3128,32400,8500,15672]);
+<script>
+let STATE = { hosts: [], settings: null, scanning: false };
+let EDIT_CATS = [];
+let pollTimer = null;
+const UNCAT = { id: "_other", name: "未分类", color: "#6b7280", order: 9999, visible: true };
+
+const WEB = { http:"http", https:"https", "https-alt":"https", "http-proxy":"http",
+  "http-alt":"http", "ssl/http":"https", caldav:"http", webcache:"http" };
+const WEB_PORTS = new Set([80,81,443,3000,5000,5001,5601,7860,8000,8006,8008,8080,8081,
+  8086,8088,8096,8123,8443,8888,9000,9001,9090,9443,3128,32400,8500,15672,10000]);
 const HTTPS_PORTS = new Set([443,8443,9443,8006,6443]);
 
 function svcUrl(ip, s) {
-  const name = (s.name || "").toLowerCase();
-  let scheme = WEB[name];
+  let scheme = WEB[(s.name||"").toLowerCase()];
   if (!scheme && WEB_PORTS.has(s.port)) scheme = HTTPS_PORTS.has(s.port) ? "https" : "http";
-  if (!scheme) return null;
-  return `${scheme}://${ip}:${s.port}`;
+  return scheme ? `${scheme}://${ip}:${s.port}` : null;
+}
+function esc(s){ return (s ?? "").toString().replace(/[&<>"]/g, m =>
+  ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[m])); }
+function fmtTime(t){ if(!t) return "—"; const d=new Date(t*1000), p=n=>String(n).padStart(2,"0");
+  return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+
+function sortedCats(){ return [...(STATE.settings.categories||[])].sort((a,b)=>a.order-b.order); }
+function catFor(s){
+  const name=(s.name||"").toLowerCase();
+  for(const c of sortedCats()){
+    if((c.ports||[]).includes(s.port)) return c;
+    if((c.services||[]).includes(name)) return c;
+  }
+  return UNCAT;
+}
+function isHidden(ip, s){
+  const cat = catFor(s);
+  if (cat.visible === false) return true;
+  return (STATE.settings.hidden||[]).includes(ip+":"+s.port);
 }
 
-async function load() {
-  try {
-    const r = await fetch("/api/state");
-    STATE = await r.json();
-    render();
-  } catch (e) { /* ignore transient */ }
+async function load(){
+  try { STATE = await (await fetch("/api/state")).json(); render(); } catch(e){}
+}
+async function saveSettings(patch){
+  const d = await (await fetch("/api/settings",{method:"POST",
+    headers:{"Content-Type":"application/json"}, body:JSON.stringify(patch)})).json();
+  STATE.settings = d.settings; render();
 }
 
-function fmtTime(t) {
-  if (!t) return "—";
-  const d = new Date(t * 1000), p = n => String(n).padStart(2, "0");
-  return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+function setView(v){ document.querySelectorAll("#viewSeg button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));
+  saveSettings({view:v}); }
+function setSort(v){ saveSettings({host_sort:v}); }
+async function toggleHidden(ip, port){
+  const key=ip+":"+port, h=new Set(STATE.settings.hidden||[]);
+  h.has(key)?h.delete(key):h.add(key); saveSettings({hidden:[...h]});
 }
+async function saveLabel(ip, label){
+  await fetch("/api/host/"+ip, {method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({label})});
+}
+async function triggerScan(){ document.getElementById("scanBtn").disabled=true;
+  await fetch("/api/scan",{method:"POST"}); setTimeout(load,600); }
 
-function render() {
-  const c = STATE.config || {};
+function render(){
+  const st = STATE.settings; if(!st) return;
   const ls = STATE.last_scan;
-  const upCount = STATE.hosts.filter(h => h.is_up).length;
-  const svcCount = STATE.hosts.reduce((a, h) => a + (h.services?.length || 0), 0);
+  const showHidden = document.getElementById("showHidden").checked;
+  const upCount = STATE.hosts.filter(h=>h.is_up).length;
+  const svcCount = STATE.hosts.reduce((a,h)=>a+(h.services||[]).length,0);
 
   document.getElementById("meta").innerHTML =
-    `网段 <b>${c.subnet || "?"}</b> · 上次扫描 <b>${fmtTime(ls?.finished_at)}</b>` +
-    (c.interval ? ` · 自动每 <b>${Math.round(c.interval/60)}</b> 分钟` : "");
+    `目标 <b>${esc(st.targets)}</b> · 上次扫描 <b>${fmtTime(ls?.finished_at)}</b>` +
+    (st.interval ? ` · 自动每 <b>${Math.round(st.interval/60)}</b> 分钟` : "");
+  const btn=document.getElementById("scanBtn");
+  btn.disabled=STATE.scanning; btn.textContent=STATE.scanning?"扫描中…":"立即扫描";
+  document.querySelectorAll("#viewSeg button").forEach(b=>b.classList.toggle("on",b.dataset.view===st.view));
+  document.getElementById("hostSort").value = st.host_sort;
+  document.getElementById("sortWrap").style.display = st.view==="host" ? "" : "none";
 
-  const btn = document.getElementById("scanBtn");
-  btn.disabled = STATE.scanning;
-  btn.textContent = STATE.scanning ? "扫描中…" : "立即扫描";
-
-  // poll faster while a scan runs
   clearInterval(pollTimer);
-  pollTimer = setInterval(load, STATE.scanning ? 1500 : 8000);
+  pollTimer=setInterval(load, STATE.scanning?1500:8000);
 
-  let banner = "";
-  if (!STATE.nmap_available)
-    banner = `<div class="banner">未检测到 nmap，无法扫描。请先安装：<code>brew install nmap</code></div>`;
-  else if (ls?.error)
-    banner = `<div class="banner">上次扫描失败：${ls.error}</div>`;
-  document.getElementById("banner").innerHTML = banner;
+  let banner="";
+  if(!STATE.nmap_available) banner=`<div class="banner">未检测到 nmap，无法扫描。请先安装 nmap。</div>`;
+  else if(ls?.error) banner=`<div class="banner">上次扫描失败：${esc(ls.error)}</div>`;
+  document.getElementById("banner").innerHTML=banner;
 
-  document.getElementById("stats").innerHTML = `
+  document.getElementById("stats").innerHTML=`
     <div class="stat"><div class="n">${upCount}</div><div class="l">在线主机</div></div>
     <div class="stat"><div class="n">${svcCount}</div><div class="l">开放服务</div></div>
     <div class="stat"><div class="n">${STATE.hosts.length}</div><div class="l">已知设备</div></div>`;
 
-  const q = document.getElementById("search").value.trim().toLowerCase();
-  const hosts = STATE.hosts.filter(h => !q || hostMatches(h, q));
-
-  document.getElementById("empty").style.display = hosts.length ? "none" : "block";
-  document.getElementById("grid").innerHTML = hosts.map(hostCard).join("");
+  const q=document.getElementById("search").value.trim().toLowerCase();
+  const hosts=STATE.hosts.filter(h=>!q||hostMatches(h,q));
+  document.getElementById("empty").style.display=hosts.length?"none":"block";
+  document.getElementById("content").innerHTML =
+    st.view==="category" ? categoryView(hosts, showHidden) : hostView(hosts, showHidden);
 }
 
-function hostMatches(h, q) {
-  const hay = [h.ip, h.hostname, h.label, h.note, h.vendor,
-    ...(h.services||[]).flatMap(s => [s.name, s.product, String(s.port)])]
-    .filter(Boolean).join(" ").toLowerCase();
-  return hay.includes(q);
+function hostMatches(h,q){
+  return [h.ip,h.hostname,h.label,h.note,h.vendor,
+    ...(h.services||[]).flatMap(s=>[s.name,s.product,String(s.port)])]
+    .filter(Boolean).join(" ").toLowerCase().includes(q);
 }
 
-function esc(s) { return (s ?? "").replace(/[&<>"]/g, m =>
-  ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[m])); }
-
-function hostCard(h) {
-  const services = (h.services || []).map(s => {
-    const url = h.is_up ? svcUrl(h.ip, s) : null;
-    const desc = [s.product, s.version].filter(Boolean).join(" ");
-    const inner = `<span class="port">${s.port}</span>` +
-      (s.name ? `<span class="name">${esc(s.name)}</span>` : "") +
-      (url ? `<span class="arrow">↗</span>` : "");
-    const title = desc ? ` title="${esc(desc)}"` : "";
-    return url
-      ? `<a class="svc link" href="${url}" target="_blank" rel="noopener"${title}>${inner}</a>`
-      : `<span class="svc"${title}>${inner}</span>`;
-  }).join("");
-
-  const sub = [h.hostname, h.mac].filter(Boolean).map(esc).join(" · ");
-  return `
-  <div class="card ${h.is_up ? "" : "down"}">
-    <div class="top">
-      <span class="dot"></span>
-      <div style="flex:1; min-width:0">
-        <input class="label-input" placeholder="未命名设备"
-          value="${esc(h.label || "")}"
-          onchange="saveLabel('${h.ip}', this.value)">
-        <div class="ip">${h.ip}</div>
-        ${sub ? `<div class="host-sub">${sub}</div>` : ""}
-        ${h.vendor ? `<div class="vendor">${esc(h.vendor)}</div>` : ""}
-      </div>
-    </div>
-    ${services
-      ? `<div class="services">${services}</div>`
-      : `<div class="no-svc">${h.is_up ? "无开放端口" : "离线"}</div>`}
-  </div>`;
-}
-
-async function saveLabel(ip, label) {
-  await fetch("/api/host/" + ip, {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ label }),
+function sortHosts(hosts){
+  const k=STATE.settings.host_sort;
+  const ipKey=ip=>ip.split(".").map(Number);
+  const arr=[...hosts];
+  arr.sort((a,b)=>{
+    if(a.is_up!==b.is_up) return a.is_up?-1:1;
+    if(k==="label") return (a.label||a.hostname||a.ip).localeCompare(b.label||b.hostname||b.ip);
+    if(k==="services") return (b.services||[]).length-(a.services||[]).length;
+    if(k==="last_seen") return (b.last_seen||0)-(a.last_seen||0);
+    const x=ipKey(a.ip),y=ipKey(b.ip);
+    for(let i=0;i<4;i++){ if((x[i]||0)!==(y[i]||0)) return (x[i]||0)-(y[i]||0); }
+    return 0;
   });
+  return arr;
 }
 
-async function triggerScan() {
-  document.getElementById("scanBtn").disabled = true;
-  await fetch("/api/scan", { method: "POST" });
-  setTimeout(load, 600);
+function svcChip(ip, s, showHidden){
+  const hidden=isHidden(ip,s);
+  if(hidden && !showHidden) return "";
+  const cat=catFor(s), url=svcUrl(ip,s);
+  const desc=[s.product,s.version].filter(Boolean).join(" ");
+  const inner=`<span class="port">${s.port}</span>`+(s.name?`<span class="name">${esc(s.name)}</span>`:"")+(url?`<span class="arrow">↗</span>`:"");
+  const eye=`<button class="eye" title="${hidden?"显示":"隐藏"}" onclick="event.preventDefault();event.stopPropagation();toggleHidden('${ip}',${s.port})">${hidden?"🚫":"👁"}</button>`;
+  const style=`style="border-left-color:${cat.color}"`, title=desc?`title="${esc(desc)}"`:"";
+  const cls=`svc${url?" link":""}${hidden?" hidden":""}`;
+  return url
+    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${eye}</span>`
+    : `<span class="${cls}" ${style} ${title}>${inner}${eye}</span>`;
+}
+
+function hostView(hosts, showHidden){
+  return `<div class="grid">${sortHosts(hosts).map(h=>{
+    const svcs=(h.services||[]).slice()
+      .sort((a,b)=> (catFor(a).order-catFor(b).order) || (a.port-b.port))
+      .map(s=>svcChip(h.ip,s,showHidden)).join("");
+    const sub=[h.hostname,h.mac].filter(Boolean).map(esc).join(" · ");
+    return `<div class="card ${h.is_up?"":"down"}">
+      <div class="top"><span class="dot"></span>
+        <div style="flex:1;min-width:0">
+          <input class="label-input" placeholder="未命名设备" value="${esc(h.label||"")}"
+            onchange="saveLabel('${h.ip}',this.value)">
+          <div class="ip">${h.ip}</div>
+          ${sub?`<div class="host-sub">${sub}</div>`:""}
+          ${h.vendor?`<div class="vendor">${esc(h.vendor)}</div>`:""}
+        </div></div>
+      ${svcs?`<div class="services">${svcs}</div>`:`<div class="no-svc">${h.is_up?"无开放端口":"离线"}</div>`}
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function categoryView(hosts, showHidden){
+  const labelOf={}; hosts.forEach(h=>labelOf[h.ip]=h);
+  // bucket services by category
+  const buckets=new Map();
+  for(const h of hosts){ if(!h.is_up) continue;
+    for(const s of (h.services||[])){
+      if(isHidden(h.ip,s) && !showHidden) continue;
+      const cat=catFor(s);
+      if(!buckets.has(cat.id)) buckets.set(cat.id,{cat,items:[]});
+      buckets.get(cat.id).items.push({h,s});
+    }
+  }
+  const order=[...sortedCats(),UNCAT];
+  const sections=order.filter(c=>buckets.has(c.id)).map(c=>{
+    const b=buckets.get(c.id);
+    const cards=b.items.sort((a,b)=>a.s.port-b.s.port).map(({h,s})=>{
+      const url=svcUrl(h.ip,s), who=(h.label||h.hostname||"")+(h.label||h.hostname?" · ":"")+h.ip;
+      const inner=`<div class="h"><span class="nm">${esc(s.name||"service")}</span><span class="pt">${h.ip}:${s.port}</span></div>
+        <div class="who">${esc(who)}</div>`;
+      return url
+        ? `<a class="svc-card" style="border-left-color:${c.color}" href="${url}" target="_blank" rel="noopener">${inner}</a>`
+        : `<div class="svc-card" style="border-left-color:${c.color}">${inner}</div>`;
+    }).join("");
+    return `<div class="cat-section">
+      <div class="cat-head"><span class="swatch" style="background:${c.color}"></span>
+        <h2>${esc(c.name)}</h2><span class="count">${b.items.length}</span></div>
+      <div class="grid">${cards}</div></div>`;
+  }).join("");
+  return sections || `<div class="empty">没有可显示的服务。</div>`;
+}
+
+/* ---- settings modal ---- */
+function openSettings(){
+  const s=STATE.settings;
+  document.getElementById("f_targets").value=s.targets;
+  document.getElementById("f_ports").value=s.ports;
+  document.getElementById("f_interval").value=Math.round(s.interval/60);
+  document.getElementById("f_timing").value=s.timing;
+  document.getElementById("f_sv").checked=s.service_detection;
+  EDIT_CATS=JSON.parse(JSON.stringify(s.categories||[]));
+  renderCatEditor();
+  document.getElementById("overlay").classList.add("show");
+}
+function closeSettings(){ document.getElementById("overlay").classList.remove("show"); }
+function renderCatEditor(){
+  EDIT_CATS.sort((a,b)=>a.order-b.order);
+  document.getElementById("catEditor").innerHTML=EDIT_CATS.map((c,i)=>`
+    <div class="cat-row">
+      <input type="color" value="${c.color}" onchange="EDIT_CATS[${i}].color=this.value">
+      <input type="text" value="${esc(c.name)}" placeholder="名称" oninput="EDIT_CATS[${i}].name=this.value">
+      <input type="text" value="${(c.ports||[]).join(',')}" placeholder="端口" oninput="EDIT_CATS[${i}].ports=this.value.split(',').map(x=>parseInt(x)).filter(Boolean)">
+      <input type="text" value="${(c.services||[]).join(',')}" placeholder="服务名" oninput="EDIT_CATS[${i}].services=this.value.split(',').map(x=>x.trim()).filter(Boolean)">
+      <div style="display:flex;gap:4px;align-items:center">
+        <button class="mini" title="显示/隐藏" onclick="EDIT_CATS[${i}].visible=!EDIT_CATS[${i}].visible;renderCatEditor()">${c.visible!==false?"👁":"🚫"}</button>
+        <button class="mini" onclick="moveCat(${i},-1)">↑</button>
+        <button class="mini" onclick="moveCat(${i},1)">↓</button>
+        <button class="mini" onclick="EDIT_CATS.splice(${i},1);renderCatEditor()">✕</button>
+      </div>
+    </div>`).join("");
+}
+function moveCat(i,d){ const j=i+d; if(j<0||j>=EDIT_CATS.length) return;
+  [EDIT_CATS[i],EDIT_CATS[j]]=[EDIT_CATS[j],EDIT_CATS[i]];
+  EDIT_CATS.forEach((c,k)=>c.order=k+1); renderCatEditor(); }
+function addCat(){ EDIT_CATS.push({id:"cat"+Date.now(),name:"新分类",color:"#888",
+  order:EDIT_CATS.length+1,visible:true,ports:[],services:[]}); renderCatEditor(); }
+function saveSettingsForm(){
+  EDIT_CATS.forEach((c,k)=>c.order=k+1);
+  saveSettings({
+    targets:document.getElementById("f_targets").value,
+    ports:document.getElementById("f_ports").value,
+    interval:(parseInt(document.getElementById("f_interval").value)||0)*60,
+    timing:document.getElementById("f_timing").value,
+    service_detection:document.getElementById("f_sv").checked,
+    categories:EDIT_CATS,
+  });
+  closeSettings();
 }
 
 document.getElementById("search").addEventListener("input", render);
