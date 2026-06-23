@@ -18,9 +18,15 @@ services:
 
     environment:
       # Override the auto-detected subnet to match your network.
-      - LANSCOUT_SUBNET=192.168.1.0/24
+      - LANSCOUT_SUBNET=${LANSCOUT_SUBNET:-10.0.0.0/24}
       - LANSCOUT_PORT=8770
       - LANSCOUT_DB=/data/lanscout.db
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - http_proxy=
+      - https_proxy=
+      - NO_PROXY=
+      - no_proxy=
 
     volumes:
       - ./data:/data

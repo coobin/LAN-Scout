@@ -245,6 +245,35 @@ class Handler(BaseHTTPRequestHandler):
                     })
                 except Exception as e:
                     return self._json({"error": f"Failed to connect: {str(e)}"}, 500)
+            if self.path == "/api/docker/control":
+                body = self._read_json()
+                ip = (body.get("ip") or "").strip()
+                port = body.get("port") or 2375
+                container_id = (body.get("id") or "").strip()
+                action = (body.get("action") or "").strip()
+                
+                if not ip or not container_id or action not in ("start", "stop"):
+                    return self._json({"error": "ip, id, and action (start/stop) are required"}, 400)
+                
+                if not settings_mod._TARGET_RE.match(ip):
+                    return self._json({"error": "invalid host or IP"}, 400)
+                
+                scheme = "https" if port == 2376 else "http"
+                url = f"{scheme}://{ip}:{port}/containers/{container_id}/{action}"
+                
+                import urllib.request
+                try:
+                    req = urllib.request.Request(url, data=b"", method="POST")
+                    with urllib.request.urlopen(req, timeout=10.0) as r:
+                        pass
+                    try:
+                        containers = docker_probe._query(f"{scheme}://{ip}:{port}", timeout=5.0)
+                        db.save_single_docker_host(ip, port, containers)
+                    except Exception:
+                        pass
+                    return self._json({"ok": True})
+                except Exception as e:
+                    return self._json({"error": f"Failed to {action} container: {str(e)}"}, 500)
             if self.path == "/api/service/add":
                 body = self._read_json()
                 ip = (body.get("ip") or "").strip()

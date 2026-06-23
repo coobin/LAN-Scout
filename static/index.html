@@ -132,10 +132,16 @@
   .ct-list { display: flex; flex-direction: column; gap: 5px; max-height: 280px; overflow: auto; }
   .ct { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline;
     padding: 5px 8px; background: var(--panel-2); border-radius: 8px; border-left: 3px solid var(--ct-border); }
-  .ct-name { font-weight: 600; font-size: 13px; word-break: break-all; }
-  .ct.stopped { opacity: .5; border-left-color: var(--down); }
+  .ct-name { font-weight: 600; font-size: 13px; word-break: break-all; display: inline-flex; align-items: center; gap: 5px; }
+  .ct.stopped { opacity: .6; border-left-color: var(--down); }
   .ct-img { color: var(--muted); font-size: 11px; grid-column: 1; word-break: break-all; }
   .ct-ports { grid-row: 1 / span 2; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+  .btn-ct-ctrl { background: none; border: none; cursor: pointer; padding: 0; line-height: 1;
+    font-size: 11px; opacity: .45; transition: opacity .15s, transform .15s; flex-shrink: 0; }
+  .btn-ct-ctrl:hover { opacity: 1; transform: scale(1.2); }
+  .ct:hover .btn-ct-ctrl { opacity: .7; }
+  .btn-ct-ctrl.start { color: var(--up); }
+  .btn-ct-ctrl.stop { color: var(--danger); }
   .cport { font-size: 12px; text-decoration: none; background: var(--cport-bg); border: 1px solid var(--cport-border);
     border-radius: 6px; padding: 2px 6px; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text); }
   .cport:hover { border-color: var(--accent); }
@@ -631,8 +637,13 @@ function containerRow(ip, ct){
     statsHtml = `<span class="ds-stopped">已停止 (${ct.state || "exited"})</span>`;
   }
   
+  const dockerPort = getDockerPortForHost(ip);
+  const ctrlBtn = stopped
+    ? `<button class="btn-ct-ctrl start" title="启动" onclick="event.stopPropagation();controlContainer('${ip}', ${dockerPort}, '${ct.id || ct.name}', 'start')">▶</button>`
+    : `<button class="btn-ct-ctrl stop" title="停止" onclick="event.stopPropagation();controlContainer('${ip}', ${dockerPort}, '${ct.id || ct.name}', 'stop')">⏹</button>`;
+  
   return `<div class="ct ${stopped?"stopped":""}">
-    <span class="ct-name">🐳 ${esc(ct.name)}</span>
+    <span class="ct-name">🐳 ${esc(ct.name)} ${ctrlBtn}</span>
     <div class="ct-ports">${links||internal||`<span class="cport int">—</span>`}</div>
     <span class="ct-img" style="margin-top:2px">${esc(ct.image||"")} ${statsHtml ? `· ${statsHtml}` : ""}</span>
   </div>`;
@@ -693,9 +704,13 @@ function appCard(it){
   if (it.isDocker && it.container) {
     const ct = it.container;
     const stopped = ct.state && ct.state !== "running";
-    statsHtml = stopped
+    const dockerPort = getDockerPortForHost(it.ip);
+    const btn = stopped
+      ? `<button class="btn-ct-ctrl start" title="启动" style="margin-left:4px;font-size:10px" onclick="${stop}controlContainer('${it.ip}', ${dockerPort}, '${ct.id || ct.name}', 'start')">▶</button>`
+      : `<button class="btn-ct-ctrl stop" title="停止" style="margin-left:4px;font-size:10px" onclick="${stop}controlContainer('${it.ip}', ${dockerPort}, '${ct.id || ct.name}', 'stop')">⏹</button>`;
+    statsHtml = (stopped
       ? `<span class="ds-stopped">已停止</span>`
-      : renderDockerStats(ct);
+      : renderDockerStats(ct)) + btn;
   }
 
   let urlBlock = "";
@@ -970,6 +985,43 @@ async function setExtUrl(ip, port){
   const u = { ... (STATE.settings.ext_urls || {}) };
   if (url.trim()) u[key] = url.trim(); else delete u[key];
   saveSettings({ ext_urls: u });
+}
+
+function getDockerPortForHost(ip) {
+  const host = STATE.hosts.find(h => h.ip === ip);
+  if (host && host.services) {
+    const svc = host.services.find(s => s.name === "docker" || s.port === 2375 || s.port === 2376);
+    if (svc) return svc.port;
+  }
+  return 2375;
+}
+
+async function controlContainer(ip, port, containerId, action) {
+  if (!confirm(`确认要${action==="start"?"启动":"停止"}容器吗？`)) return;
+  const btn = event.currentTarget;
+  const oldText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = "…";
+  
+  try {
+    const res = await fetch("/api/docker/control", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ip, port, id: containerId, action })
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      await load();
+    } else {
+      alert(`操作失败：${data.error || "未知错误"}`);
+      btn.disabled = false;
+      btn.innerHTML = oldText;
+    }
+  } catch (e) {
+    alert("网络请求失败，请检查服务状态");
+    btn.disabled = false;
+    btn.innerHTML = oldText;
+  }
 }
 
 document.getElementById("search").addEventListener("input", render);

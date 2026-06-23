@@ -117,6 +117,7 @@ def _query(base: str, timeout: float) -> list[dict]:
                 mem_str = ""
 
         out.append({
+            "id": c.get("Id"),
             "name": name,
             "image": c.get("Image"),
             "state": c.get("State"),
