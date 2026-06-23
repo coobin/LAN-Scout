@@ -96,6 +96,18 @@
   .empty { text-align: center; color: var(--muted); padding: 80px 20px; }
   .banner { background: #3a1d1d; border: 1px solid var(--danger); color: #fca5a5;
     padding: 12px 16px; border-radius: 10px; margin-bottom: 18px; }
+  /* launchpad (导航) */
+  .apps { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  .app { position: relative; display: flex; flex-direction: column; gap: 4px; text-decoration: none;
+    background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 14px; padding: 14px 16px; transition: border-color .12s, transform .12s; }
+  .app:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .app.hidden { opacity: .45; border-style: dashed; }
+  .app .an { font-weight: 700; font-size: 15px; word-break: break-all; padding-right: 40px; }
+  .app .au { color: var(--accent); font-size: 13px; font-variant-numeric: tabular-nums; word-break: break-all; }
+  .app .ah { color: var(--muted); font-size: 12px; }
+  .app .acts { position: absolute; top: 8px; right: 8px; display: flex; gap: 2px; opacity: 0; transition: opacity .12s; }
+  .app:hover .acts { opacity: 1; }
   .cat-section { margin-bottom: 26px; }
   .cat-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .cat-head .swatch { width: 12px; height: 12px; border-radius: 4px; }
@@ -143,8 +155,8 @@
   <div class="stats" id="stats"></div>
   <div class="toolbar">
     <div class="seg" id="viewSeg">
-      <button data-view="host" onclick="setView('host')">按主机</button>
-      <button data-view="category" onclick="setView('category')">按分类</button>
+      <button data-view="nav" onclick="setView('nav')">导航</button>
+      <button data-view="host" onclick="setView('host')">详细</button>
     </div>
     <label class="toggle" id="sortWrap">排序
       <select class="ctl" id="hostSort" onchange="setSort(this.value)">
@@ -301,7 +313,8 @@ function render(){
     (st.interval ? ` · 自动每 <b>${Math.round(st.interval/60)}</b> 分钟` : "");
   const btn=document.getElementById("scanBtn");
   btn.disabled=STATE.scanning; btn.textContent=STATE.scanning?"扫描中…":"立即扫描";
-  document.querySelectorAll("#viewSeg button").forEach(b=>b.classList.toggle("on",b.dataset.view===st.view));
+  const effView = st.view==="host" ? "host" : "nav";   // legacy "category" → nav
+  document.querySelectorAll("#viewSeg button").forEach(b=>b.classList.toggle("on",b.dataset.view===effView));
   document.getElementById("hostSort").value = st.host_sort;
   document.getElementById("sortWrap").style.display = st.view==="host" ? "" : "none";
 
@@ -313,18 +326,23 @@ function render(){
   else if(ls?.error) banner=`<div class="banner">上次扫描失败：${esc(ls.error)}</div>`;
   document.getElementById("banner").innerHTML=banner;
 
-  document.getElementById("stats").innerHTML=`
+  // The stats row is scanner detail — only show it in the 详细 view to keep
+  // the 导航 launchpad clean.
+  const detail = st.view==="host";
+  const stats=document.getElementById("stats");
+  stats.style.display = detail ? "flex" : "none";
+  stats.innerHTML = detail ? `
     <div class="stat"><div class="n">${upCount}</div><div class="l">在线主机</div></div>
     <div class="stat"><div class="n">${svcCount}</div><div class="l">开放服务</div></div>
     ${ctCount?`<div class="stat"><div class="n">${ctCount}</div><div class="l">🐳 容器</div></div>`:""}
-    <div class="stat"><div class="n">${STATE.hosts.length}</div><div class="l">已知设备</div></div>`;
+    <div class="stat"><div class="n">${STATE.hosts.length}</div><div class="l">已知设备</div></div>` : "";
 
   renderCatFilter();
   const q=document.getElementById("search").value.trim().toLowerCase();
   const hosts=STATE.hosts.filter(h=>!q||hostMatches(h,q));
   document.getElementById("empty").style.display=hosts.length?"none":"block";
   document.getElementById("content").innerHTML =
-    st.view==="category" ? categoryView(hosts, showHidden) : hostView(hosts, showHidden);
+    detail ? hostView(hosts, showHidden) : navView(hosts, showHidden);
 }
 
 // Whether a service passes the active category filter (null = 全部).
@@ -390,6 +408,60 @@ function containerRow(ip, ct){
     <div class="ct-ports">${links||internal||`<span class="cport int">—</span>`}</div>
     <span class="ct-img" title="${esc(ct.status||"")}">${esc(ct.image||"")}</span>
   </div>`;
+}
+
+// 导航 / launchpad: only things you can actually open — web services and
+// published docker ports — as a clean address book grouped by category.
+function navView(hosts, showHidden){
+  const renames=STATE.settings.renames||{}, hiddenSet=new Set(STATE.settings.hidden||[]);
+  const dockerPub=new Set(), items=[];
+  const pushItem=(cat,key,name,url,host,ip,port,hidden)=>{
+    if(activeCat && cat.id!==activeCat) return;
+    if(hidden && !showHidden) return;
+    items.push({cat,key,name,url,host,ip,port,hidden});
+  };
+  for(const h of hosts){ if(!h.is_up) continue;
+    for(const ct of (h.containers||[])){
+      for(const p of (ct.ports||[])){
+        if(!p.public) continue;
+        const key=h.ip+":"+p.public; dockerPub.add(key);
+        const cat=catFor({port:p.public,name:""});
+        const hid=hiddenSet.has(key) || cat.visible===false;
+        const scheme=HTTPS_PORTS.has(p.public)?"https":"http";
+        pushItem(cat,key,renames[key]||ct.name,`${scheme}://${h.ip}:${p.public}`,h,h.ip,p.public,hid);
+      }
+    }
+    for(const s of (h.services||[])){
+      const url=svcUrl(h.ip,s); if(!url) continue;
+      const key=h.ip+":"+s.port;
+      if(dockerPub.has(key)) continue;            // already shown as a container
+      pushItem(catFor(s),key,svcName(h.ip,s),url,h,h.ip,s.port,isHidden(h.ip,s));
+    }
+  }
+  if(!items.length) return `<div class="empty">没有可访问的服务。换「详细」视图看完整扫描结果，或点「立即扫描」。</div>`;
+  const order=[...sortedCats(),UNCAT];
+  return order.map(c=>{
+    const its=items.filter(i=>i.cat.id===c.id).sort((a,b)=>a.name.localeCompare(b.name));
+    if(!its.length) return "";
+    return `<div class="cat-section">
+      <div class="cat-head"><span class="swatch" style="background:${c.color}"></span>
+        <h2>${esc(c.name)}</h2><span class="count">${its.length}</span></div>
+      <div class="apps">${its.map(appCard).join("")}</div></div>`;
+  }).join("");
+}
+function appCard(it){
+  const who=(it.host.label||it.host.hostname||"")+(it.host.label||it.host.hostname?" · ":"")+it.ip;
+  const stop="event.preventDefault();event.stopPropagation();";
+  return `<a class="app ${it.hidden?"hidden":""}" href="${it.url}" target="_blank" rel="noopener"
+      style="border-left-color:${it.cat.color}">
+    <div class="acts">
+      <button class="pencil" title="重命名" onclick="${stop}renameSvc('${it.ip}',${it.port})">✎</button>
+      <button class="eye" title="${it.hidden?"显示":"隐藏"}" onclick="${stop}toggleHidden('${it.ip}',${it.port})">${it.hidden?"🚫":"👁"}</button>
+    </div>
+    <div class="an">${esc(it.name)}</div>
+    <div class="au">${esc(it.url)}</div>
+    <div class="ah">${esc(who)}</div>
+  </a>`;
 }
 
 function hostView(hosts, showHidden){

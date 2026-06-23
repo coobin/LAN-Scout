@@ -45,7 +45,7 @@ def defaults() -> dict:
         "skip_discovery": config.SKIP_DISCOVERY,
         # Query the Docker API on hosts exposing 2375 to list their containers.
         "docker_probe": config.DOCKER_PROBE,
-        "view": "host",          # "host" | "category"
+        "view": "nav",           # "nav" (launchpad) | "host" (detailed scan)
         "host_sort": "ip",       # ip | label | services | last_seen
         "categories": [dict(c) for c in config.DEFAULT_CATEGORIES],
         "hidden": [],            # ["<ip>:<port>", …] individually hidden services
@@ -103,7 +103,7 @@ def _validate(key: str, value, previous):
     if key in ("service_detection", "skip_discovery", "docker_probe"):
         return bool(value)
     if key == "view":
-        return value if value in {"host", "category"} else previous
+        return value if value in {"nav", "host", "category"} else previous
     if key == "host_sort":
         return value if value in {"ip", "label", "services", "last_seen"} \
             else previous
