@@ -410,6 +410,15 @@ function containerRow(ip, ct){
   </div>`;
 }
 
+// Classify a docker container by its image so the launchpad can skip
+// non-browser services (databases, caches, FTP, message queues, …).
+function dockerKind(image){
+  const s=(image||"").toLowerCase();
+  if(/postgres|mysql|mariadb|mongo|redis|memcached|elasticsearch|clickhouse|rabbitmq|kafka|zookeeper|etcd|influxdb|cassandra|nats|consul/.test(s)) return "infra";
+  if(/vsftpd|proftpd|pure-?ftpd|\bftp\b/.test(s)) return "ftp";
+  return "web";
+}
+
 // 导航 / launchpad: only things you can actually open — web services and
 // published docker ports — as a clean address book grouped by category.
 function navView(hosts, showHidden){
@@ -422,9 +431,13 @@ function navView(hosts, showHidden){
   };
   for(const h of hosts){ if(!h.is_up) continue;
     for(const ct of (h.containers||[])){
+      const kind=dockerKind(ct.image);
       for(const p of (ct.ports||[])){
         if(!p.public) continue;
         const key=h.ip+":"+p.public; dockerPub.add(key);
+        // Only web apps belong on a launchpad — skip databases, caches, FTP,
+        // and other non-browser services (they remain in the 详细 view).
+        if(kind!=="web") continue;
         const cat=catFor({port:p.public,name:""});
         const hid=hiddenSet.has(key) || cat.visible===false;
         const scheme=HTTPS_PORTS.has(p.public)?"https":"http";
