@@ -5,6 +5,7 @@ detection (``-sV``) is optional and controlled via config.
 """
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import threading
@@ -26,7 +27,12 @@ def nmap_available() -> bool:
 
 
 def build_command(subnet: str) -> list[str]:
-    cmd = ["nmap", "-sT", "--open", f"-T{config.TIMING}"]
+    # Run as root → let nmap use ARP host discovery + a SYN scan, which is the
+    # accurate way to enumerate devices on a local segment. Unprivileged → fall
+    # back to a TCP connect scan (no sudo needed, but misses ping-silent hosts).
+    privileged = hasattr(os, "geteuid") and os.geteuid() == 0
+    cmd = ["nmap", "--open", f"-T{config.TIMING}"]
+    cmd.append("-sS" if privileged else "-sT")
     if config.SERVICE_DETECTION:
         cmd += ["-sV", "--version-light"]
     if config.PORTS and config.PORTS != "-":
