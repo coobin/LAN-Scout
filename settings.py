@@ -25,7 +25,7 @@ _PORTS_RE = re.compile(r"^[0-9,\-]+$")
 _ALLOWED = {
     "targets", "full_targets", "ports", "interval", "service_detection",
     "timing", "skip_discovery", "docker_probe", "view", "host_sort",
-    "categories", "hidden", "renames",
+    "categories", "hidden", "renames", "svc_cats",
 }
 
 
@@ -50,6 +50,7 @@ def defaults() -> dict:
         "categories": [dict(c) for c in config.DEFAULT_CATEGORIES],
         "hidden": [],            # ["<ip>:<port>", …] individually hidden services
         "renames": {},           # {"<ip>:<port>": "custom name"} per-service labels
+        "svc_cats": {},          # {"<ip>:<port>": "<category id>"} manual category
     }
 
 
@@ -121,6 +122,15 @@ def _validate(key: str, value, previous):
                 name = str(v).strip()[:60]
                 if name:
                     out[str(k)] = name
+            return out
+        return previous
+    if key == "svc_cats":
+        if isinstance(value, dict):
+            out = {}
+            for k, v in list(value.items())[:5000]:
+                cid = str(v).strip()[:40]
+                if cid:
+                    out[str(k)] = cid
             return out
         return previous
     return previous

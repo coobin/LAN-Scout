@@ -49,6 +49,10 @@
   .catchip .cnt { color: var(--muted); font-variant-numeric: tabular-nums; }
   .pencil { background: none; border: 0; color: var(--muted); padding: 0 0 0 2px; font-size: 12px; opacity: .55; }
   .pencil:hover { opacity: 1; color: var(--text); }
+  .catpick { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line);
+    border-radius: 6px; font-size: 11px; padding: 1px 3px; max-width: 92px; }
+  .catpick:hover { color: var(--text); border-color: var(--accent); }
+  .app .catpick { background: var(--panel); }
   .stats { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
   .stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
     padding: 13px 18px; min-width: 110px; }
@@ -147,6 +151,7 @@
   <div class="meta" id="meta"></div>
   <span class="spacer"></span>
   <input class="search" id="search" placeholder="搜索 IP / 名称 / 服务 / 厂商…">
+  <button class="btn" onclick="openCats()">🏷 分类</button>
   <button class="btn" onclick="openSettings()">⚙ 设置</button>
   <button class="btn primary" id="scanBtn" onclick="triggerScan()">立即扫描</button>
 </header>
@@ -195,14 +200,23 @@
         <label class="toggle" style="margin-bottom:8px"><input type="checkbox" id="f_pn"> 跳过主机发现 (-Pn) — 扫指定 IP / 不回 ping 的主机时开启</label>
         <label class="toggle"><input type="checkbox" id="f_docker"> 🐳 Docker 探测 — 对开放 2375 的主机直接列出全部容器</label></div>
     </div>
-    <details open>
-      <summary>服务分类（排序 / 颜色 / 显示）</summary>
-      <div id="catEditor"></div>
-      <button class="btn" onclick="addCat()">+ 新增分类</button>
-    </details>
     <div class="modal-actions">
       <button class="btn" onclick="closeSettings()">取消</button>
       <button class="btn primary" onclick="saveSettingsForm()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="catOverlay" onclick="if(event.target===this)closeCats()">
+  <div class="modal">
+    <h2>服务分类</h2>
+    <div class="hint">分类决定导航页的分组与颜色。一个服务归入第一个匹配其端口或服务名的分类；
+      也可以在卡片上用下拉框把某个服务直接指定到分类。👁 可隐藏整类。</div>
+    <div id="catEditor"></div>
+    <button class="btn" onclick="addCat()">+ 新增分类</button>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeCats()">取消</button>
+      <button class="btn primary" onclick="saveCats()">保存</button>
     </div>
   </div>
 </div>
@@ -245,6 +259,26 @@ function isHidden(ip, s){
   return (STATE.settings.hidden||[]).includes(ip+":"+s.port);
 }
 function svcKey(ip, s){ return ip+":"+s.port; }
+function allCats(){ return [...sortedCats(), UNCAT]; }
+// Category for a service: a manual per-service assignment wins over the
+// port/name rules in catFor().
+function catForSvc(ip, s){
+  const ov=(STATE.settings.svc_cats||{})[ip+":"+s.port];
+  if(ov){ const c=allCats().find(x=>x.id===ov); if(c) return c; }
+  return catFor(s);
+}
+function catPassSvc(ip, s){ return !activeCat || catForSvc(ip,s).id===activeCat; }
+async function assignCat(ip, port, catId){
+  const m={...(STATE.settings.svc_cats||{})};
+  if(catId) m[ip+":"+port]=catId; else delete m[ip+":"+port];
+  saveSettings({svc_cats:m});
+}
+function catSelect(ip, port, curId){
+  const opts=allCats().map(c=>`<option value="${c.id}" ${c.id===curId?"selected":""}>${esc(c.name)}</option>`).join("");
+  const stop="event.stopPropagation();";
+  return `<select class="catpick" title="归类" onclick="${stop}" onmousedown="${stop}"
+    onchange="event.preventDefault();${stop}assignCat('${ip}',${port},this.value)">${opts}</select>`;
+}
 // Display name: user rename wins, else identified product, else nmap name.
 function svcName(ip, s){
   return (STATE.settings.renames||{})[svcKey(ip,s)] || s.product || s.name || "service";
@@ -281,7 +315,7 @@ function renderCatFilter(){
   for(const h of STATE.hosts){ if(!h.is_up) continue;
     for(const s of (h.services||[])){
       if(isHidden(h.ip,s) && !document.getElementById("showHidden").checked) continue;
-      const c=catFor(s); counts[c.id]=(counts[c.id]||0)+1;
+      const c=catForSvc(h.ip,s); counts[c.id]=(counts[c.id]||0)+1;
     }
   }
   const cats=[...sortedCats(),UNCAT].filter(c=>counts[c.id]);
@@ -345,9 +379,6 @@ function render(){
     detail ? hostView(hosts, showHidden) : navView(hosts, showHidden);
 }
 
-// Whether a service passes the active category filter (null = 全部).
-function catPass(s){ return !activeCat || catFor(s).id===activeCat; }
-
 function hostMatches(h,q){
   return [h.ip,h.hostname,h.label,h.note,h.vendor,
     ...(h.services||[]).flatMap(s=>[s.name,s.product,svcName(h.ip,s),String(s.port)]),
@@ -374,8 +405,8 @@ function sortHosts(hosts){
 function svcChip(ip, s, showHidden){
   const hidden=isHidden(ip,s);
   if(hidden && !showHidden) return "";
-  if(!catPass(s)) return "";                 // filtered out by the top category bar
-  const cat=catFor(s), url=svcUrl(ip,s);
+  if(!catPassSvc(ip,s)) return "";           // filtered out by the top category bar
+  const cat=catForSvc(ip,s), url=svcUrl(ip,s);
   const desc=[s.product,s.version].filter(Boolean).join(" ");
   // Custom rename wins, else identified product, else nmap service name.
   const main=svcName(ip,s);
@@ -389,8 +420,8 @@ function svcChip(ip, s, showHidden){
   const style=`style="border-left-color:${cat.color}"`, title=desc?`title="${esc(desc)}"`:"";
   const cls=`svc${url?" link":""}${hidden?" hidden":""}`;
   return url
-    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${pen}${eye}</span>`
-    : `<span class="${cls}" ${style} ${title}>${inner}${pen}${eye}</span>`;
+    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${catSelect(ip,s.port,cat.id)}${pen}${eye}</span>`
+    : `<span class="${cls}" ${style} ${title}>${inner}${catSelect(ip,s.port,cat.id)}${pen}${eye}</span>`;
 }
 
 function containerRow(ip, ct){
@@ -438,7 +469,7 @@ function navView(hosts, showHidden){
         // Only web apps belong on a launchpad — skip databases, caches, FTP,
         // and other non-browser services (they remain in the 详细 view).
         if(kind!=="web") continue;
-        const cat=catFor({port:p.public,name:""});
+        const cat=catForSvc(h.ip,{port:p.public,name:""});
         const hid=hiddenSet.has(key) || cat.visible===false;
         const scheme=HTTPS_PORTS.has(p.public)?"https":"http";
         pushItem(cat,key,renames[key]||ct.name,`${scheme}://${h.ip}:${p.public}`,h,h.ip,p.public,hid);
@@ -448,7 +479,7 @@ function navView(hosts, showHidden){
       const url=svcUrl(h.ip,s); if(!url) continue;
       const key=h.ip+":"+s.port;
       if(dockerPub.has(key)) continue;            // already shown as a container
-      pushItem(catFor(s),key,svcName(h.ip,s),url,h,h.ip,s.port,isHidden(h.ip,s));
+      pushItem(catForSvc(h.ip,s),key,svcName(h.ip,s),url,h,h.ip,s.port,isHidden(h.ip,s));
     }
   }
   if(!items.length) return `<div class="empty">没有可访问的服务。换「详细」视图看完整扫描结果，或点「立即扫描」。</div>`;
@@ -468,6 +499,7 @@ function appCard(it){
   return `<a class="app ${it.hidden?"hidden":""}" href="${it.url}" target="_blank" rel="noopener"
       style="border-left-color:${it.cat.color}">
     <div class="acts">
+      ${catSelect(it.ip,it.port,it.cat.id)}
       <button class="pencil" title="重命名" onclick="${stop}renameSvc('${it.ip}',${it.port})">✎</button>
       <button class="eye" title="${it.hidden?"显示":"隐藏"}" onclick="${stop}toggleHidden('${it.ip}',${it.port})">${it.hidden?"🚫":"👁"}</button>
     </div>
@@ -480,7 +512,7 @@ function appCard(it){
 function hostView(hosts, showHidden){
   return `<div class="grid">${sortHosts(hosts).map(h=>{
     const svcs=(h.services||[]).slice()
-      .sort((a,b)=> (catFor(a).order-catFor(b).order) || (a.port-b.port))
+      .sort((a,b)=> (catForSvc(h.ip,a).order-catForSvc(h.ip,b).order) || (a.port-b.port))
       .map(s=>svcChip(h.ip,s,showHidden)).join("");
     // When a category filter is active, only show hosts with matching services,
     // and drop the (uncategorised) docker block to keep the filter meaningful.
@@ -503,41 +535,6 @@ function hostView(hosts, showHidden){
   }).join("")}</div>`;
 }
 
-function categoryView(hosts, showHidden){
-  const labelOf={}; hosts.forEach(h=>labelOf[h.ip]=h);
-  // bucket services by category
-  const buckets=new Map();
-  for(const h of hosts){ if(!h.is_up) continue;
-    for(const s of (h.services||[])){
-      if(isHidden(h.ip,s) && !showHidden) continue;
-      if(!catPass(s)) continue;           // top category filter
-      const cat=catFor(s);
-      if(!buckets.has(cat.id)) buckets.set(cat.id,{cat,items:[]});
-      buckets.get(cat.id).items.push({h,s});
-    }
-  }
-  const order=[...sortedCats(),UNCAT];
-  const sections=order.filter(c=>buckets.has(c.id)).map(c=>{
-    const b=buckets.get(c.id);
-    const cards=b.items.sort((a,b)=>a.s.port-b.s.port).map(({h,s})=>{
-      const url=svcUrl(h.ip,s), who=(h.label||h.hostname||"")+(h.label||h.hostname?" · ":"")+h.ip;
-      const main=svcName(h.ip,s);
-      const ver=[s.product?s.name:null, s.version].filter(Boolean).join(" · ");
-      const inner=`<div class="h"><span class="nm">${esc(main)}</span><span class="pt">${h.ip}:${s.port}</span></div>
-        ${ver?`<div class="who" style="color:var(--accent-2)">${esc(ver)}</div>`:""}
-        <div class="who">${esc(who)}</div>`;
-      return url
-        ? `<a class="svc-card" style="border-left-color:${c.color}" href="${url}" target="_blank" rel="noopener">${inner}</a>`
-        : `<div class="svc-card" style="border-left-color:${c.color}">${inner}</div>`;
-    }).join("");
-    return `<div class="cat-section">
-      <div class="cat-head"><span class="swatch" style="background:${c.color}"></span>
-        <h2>${esc(c.name)}</h2><span class="count">${b.items.length}</span></div>
-      <div class="grid">${cards}</div></div>`;
-  }).join("");
-  return sections || `<div class="empty">没有可显示的服务。</div>`;
-}
-
 /* ---- settings modal ---- */
 function openSettings(){
   const s=STATE.settings;
@@ -549,11 +546,22 @@ function openSettings(){
   document.getElementById("f_sv").checked=s.service_detection;
   document.getElementById("f_pn").checked=s.skip_discovery;
   document.getElementById("f_docker").checked=s.docker_probe;
-  EDIT_CATS=JSON.parse(JSON.stringify(s.categories||[]));
-  renderCatEditor();
   document.getElementById("overlay").classList.add("show");
 }
 function closeSettings(){ document.getElementById("overlay").classList.remove("show"); }
+
+// dedicated 分类 editor
+function openCats(){
+  EDIT_CATS=JSON.parse(JSON.stringify(STATE.settings.categories||[]));
+  renderCatEditor();
+  document.getElementById("catOverlay").classList.add("show");
+}
+function closeCats(){ document.getElementById("catOverlay").classList.remove("show"); }
+function saveCats(){
+  EDIT_CATS.forEach((c,k)=>c.order=k+1);
+  saveSettings({categories:EDIT_CATS});
+  closeCats();
+}
 function renderCatEditor(){
   EDIT_CATS.sort((a,b)=>a.order-b.order);
   document.getElementById("catEditor").innerHTML=EDIT_CATS.map((c,i)=>`
@@ -586,7 +594,6 @@ function saveSettingsForm(){
     service_detection:document.getElementById("f_sv").checked,
     skip_discovery:document.getElementById("f_pn").checked,
     docker_probe:document.getElementById("f_docker").checked,
-    categories:EDIT_CATS,
   });
   closeSettings();
 }
