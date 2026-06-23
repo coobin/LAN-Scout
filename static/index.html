@@ -581,9 +581,9 @@ function appCard(it){
     }
   }
   
-  return `<a class="app ${it.hidden?"hidden":""}" href="${it.url}" target="_blank" rel="noopener"
-      style="border-left-color:${it.cat.color}">
-    <div class="acts">
+  return `<div class="app ${it.hidden?"hidden":""}" onclick="window.open('${it.url}', '_blank', 'noopener')"
+      style="border-left-color:${it.cat.color}; cursor: pointer;">
+    <div class="acts" onclick="event.stopPropagation();" onmousedown="event.stopPropagation();">
       ${catSelect(it.ip,it.port,(STATE.settings.svc_cats||{})[it.ip+":"+it.port])}
       <button class="pencil" title="重命名" onclick="${stop}renameSvc('${it.ip}',${it.port})">✎</button>
       <button class="eye" title="${it.hidden?"显示":"隐藏"}" onclick="${stop}toggleHidden('${it.ip}',${it.port})">${it.hidden?"🚫":"👁"}</button>
@@ -592,7 +592,7 @@ function appCard(it){
     <div class="an">${esc(it.name)}</div>
     <div class="au">${esc(it.url)} ${dockerStats ? `<span style="font-size:11px;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums">${esc(dockerStats)}</span>` : ""}</div>
     <div class="ah">${esc(who)}</div>
-  </a>`;
+  </div>`;
 }
 
 function hostView(hosts, showHidden){
