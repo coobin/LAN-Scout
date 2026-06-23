@@ -1,0 +1,4 @@
+lanscout.db
+lanscout.db-*
+__pycache__/
+*.pyc
