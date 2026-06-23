@@ -89,6 +89,8 @@
   .pencil:hover { opacity: 1; color: var(--text); }
   .del { background: none; border: 0; color: var(--muted); padding: 0 0 0 2px; font-size: 12px; opacity: .55; }
   .del:hover { opacity: 1; color: var(--danger); }
+  .ext { background: none; border: 0; color: var(--muted); padding: 0 0 0 2px; font-size: 13px; opacity: .55; }
+  .ext:hover { opacity: 1; color: var(--accent); }
   .catpick { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line);
     border-radius: 6px; font-size: 11px; padding: 1px 3px; max-width: 92px; }
   .catpick:hover { color: var(--text); border-color: var(--accent); }
@@ -302,6 +304,10 @@ const WEB_PORTS = new Set([80,81,443,3000,5000,5001,5601,7860,8000,8006,8008,808
 const HTTPS_PORTS = new Set([443,8443,9443,8006,6443]);
 
 function svcUrl(ip, s) {
+  const key = ip + ":" + s.port;
+  if (STATE.settings && STATE.settings.ext_urls && STATE.settings.ext_urls[key]) {
+    return STATE.settings.ext_urls[key];
+  }
   let scheme = WEB[(s.name||"").toLowerCase()];
   if (!scheme && WEB_PORTS.has(s.port)) scheme = HTTPS_PORTS.has(s.port) ? "https" : "http";
   return scheme ? `${scheme}://${ip}:${s.port}` : null;
@@ -489,9 +495,10 @@ function svcChip(ip, s, showHidden){
   const del=`<button class="del" title="删除服务" onclick="${stop}deleteSvc('${ip}',${s.port})">✕</button>`;
   const style=`style="border-left-color:${cat.color}"`, title=desc?`title="${esc(desc)}"`:"";
   const cls=`svc${url?" link":""}${hidden?" hidden":""}`;
+  const ext=url ? `<button class="ext" title="设置外网地址" onclick="${stop}setExtUrl('${ip}',${s.port})">🌐</button>` : "";
   return url
-    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${catSelect(ip,s.port,(STATE.settings.svc_cats||{})[ip+":"+s.port])}${pen}${eye}${del}</span>`
-    : `<span class="${cls}" ${style} ${title}>${inner}${catSelect(ip,s.port,(STATE.settings.svc_cats||{})[ip+":"+s.port])}${pen}${eye}${del}</span>`;
+    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${catSelect(ip,s.port,(STATE.settings.svc_cats||{})[ip+":"+s.port])}${pen}${eye}${del}${ext}</span>`
+    : `<span class="${cls}" ${style} ${title}>${inner}${catSelect(ip,s.port,(STATE.settings.svc_cats||{})[ip+":"+s.port])}${pen}${eye}${del}${ext}</span>`;
 }
 
 function containerRow(ip, ct){
@@ -540,8 +547,10 @@ function navView(hosts, showHidden){
         const key=h.ip+":"+p.public; dockerPub.add(key);
         const cat=catForSvc(h.ip,{port:p.public,name:""});
         const hid=hiddenSet.has(key) || cat.visible===false;
+        const extUrl=(STATE.settings.ext_urls||{})[key];
         const scheme=HTTPS_PORTS.has(p.public)?"https":"http";
-        pushItem(cat,key,renames[key]||ct.name,`${scheme}://${h.ip}:${p.public}`,h,h.ip,p.public,hid,true,ct);
+        const url=extUrl || `${scheme}://${h.ip}:${p.public}`;
+        pushItem(cat,key,renames[key]||ct.name,url,h,h.ip,p.public,hid,true,ct);
       }
     }
     for(const s of (h.services||[])){
@@ -566,6 +575,7 @@ function appCard(it){
   const who=(it.host.label||it.host.hostname||"")+(it.host.label||it.host.hostname?" · ":"")+it.ip;
   const stop="event.preventDefault();event.stopPropagation();";
   const del = !it.isDocker ? `<button class="del" title="删除服务" onclick="${stop}deleteSvc('${it.ip}',${it.port})">✕</button>` : "";
+  const ext = `<button class="ext" title="设置外网地址" onclick="${stop}setExtUrl('${it.ip}',${it.port})">🌐</button>`;
   
   let dockerStats = "";
   if (it.isDocker && it.container) {
@@ -588,10 +598,10 @@ function appCard(it){
       <button class="pencil" title="重命名" onclick="${stop}renameSvc('${it.ip}',${it.port})">✎</button>
       <button class="eye" title="${it.hidden?"显示":"隐藏"}" onclick="${stop}toggleHidden('${it.ip}',${it.port})">${it.hidden?"🚫":"👁"}</button>
       ${del}
+      ${ext}
     </div>
     <div class="an">${esc(it.name)}</div>
     <div class="au">${esc(it.url)} ${dockerStats ? `<span style="font-size:11px;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums">${esc(dockerStats)}</span>` : ""}</div>
-    <div class="ah">${esc(who)}</div>
   </div>`;
 }
 
@@ -825,6 +835,15 @@ async function submitAddSvc(){
   } catch (e) {
     alert("网络请求失败");
   }
+}
+
+async function setExtUrl(ip, port){
+  const key = ip + ":" + port, cur = (STATE.settings.ext_urls || {})[key] || "";
+  const url = prompt("请输入该服务的广域网/外网访问地址（例如 http://wan.myip.com:8080，留空清除）：", cur);
+  if (url === null) return;
+  const u = { ... (STATE.settings.ext_urls || {}) };
+  if (url.trim()) u[key] = url.trim(); else delete u[key];
+  saveSettings({ ext_urls: u });
 }
 
 document.getElementById("search").addEventListener("input", render);

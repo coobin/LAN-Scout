@@ -25,7 +25,7 @@ _PORTS_RE = re.compile(r"^[0-9,\-]+$")
 _ALLOWED = {
     "targets", "full_targets", "ports", "interval", "service_detection",
     "timing", "skip_discovery", "docker_probe", "view", "host_sort",
-    "categories", "hidden", "renames", "svc_cats", "docker_hosts",
+    "categories", "hidden", "renames", "svc_cats", "docker_hosts", "ext_urls",
 }
 
 
@@ -52,6 +52,7 @@ def defaults() -> dict:
         "renames": {},           # {"<ip>:<port>": "custom name"} per-service labels
         "svc_cats": {},          # {"<ip>:<port>": "<category id>"} manual category
         "docker_hosts": "",      # space/comma separated manual docker hosts (e.g. "10.1.6.15:2375")
+        "ext_urls": {},          # {"<ip>:<port>": "public url"} manual public URL mapping
     }
 
 
@@ -135,6 +136,15 @@ def _validate(key: str, value, previous):
                 cid = str(v).strip()[:40]
                 if cid:
                     out[str(k)] = cid
+            return out
+        return previous
+    if key == "ext_urls":
+        if isinstance(value, dict):
+            out = {}
+            for k, v in list(value.items())[:5000]:
+                url = str(v).strip()[:200]
+                if url:
+                    out[str(k)] = url
             return out
         return previous
     return previous
