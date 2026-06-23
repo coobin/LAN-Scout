@@ -27,15 +27,22 @@ def nmap_available() -> bool:
 
 
 def build_command(targets: str, ports: str, service_detection: bool,
-                  timing: str) -> list[str]:
+                  timing: str, skip_discovery: bool = False) -> list[str]:
     # Run as root → let nmap use ARP host discovery + a SYN scan, which is the
     # accurate way to enumerate devices on a local segment. Unprivileged → fall
     # back to a TCP connect scan (no sudo needed, but misses ping-silent hosts).
     privileged = hasattr(os, "geteuid") and os.geteuid() == 0
     cmd = ["nmap", "--open", f"-T{timing}"]
     cmd.append("-sS" if privileged else "-sT")
+    if skip_discovery:
+        # -Pn: don't ping first; scan every target's ports regardless. Essential
+        # for specific IPs / ping-blocked or cross-subnet hosts.
+        cmd.append("-Pn")
     if service_detection:
-        cmd += ["-sV", "--version-light"]
+        # Full-intensity -sV: probes harder to identify the actual product and
+        # version (nginx 1.25, OpenSSH 9.6, MySQL 8.0 …), not just the port's
+        # default service name. Slower than --version-light but far more useful.
+        cmd += ["-sV"]
     if ports and ports != "-":
         cmd += ["-p", ports]
     # Targets are validated upstream (settings._TARGET_RE) and passed as
@@ -47,7 +54,8 @@ def build_command(targets: str, ports: str, service_detection: bool,
 
 def scan(targets: str, ports: str = config.PORTS,
          service_detection: bool = config.SERVICE_DETECTION,
-         timing: str = config.TIMING) -> list[dict]:
+         timing: str = config.TIMING,
+         skip_discovery: bool = config.SKIP_DISCOVERY) -> list[dict]:
     """Run nmap and return a list of host dicts. Raises on failure.
 
     Caller is responsible for persisting the result. The scan is serialized:
@@ -60,8 +68,9 @@ def scan(targets: str, ports: str = config.PORTS,
     _scanning.set()
     try:
         proc = subprocess.run(
-            build_command(targets, ports, service_detection, timing),
-            capture_output=True, text=True, timeout=1800,
+            build_command(targets, ports, service_detection, timing,
+                          skip_discovery),
+            capture_output=True, text=True, timeout=3600,
         )
         if proc.returncode != 0 and not proc.stdout.strip():
             raise RuntimeError(
@@ -102,12 +111,19 @@ def parse_xml(xml_text: str) -> list[dict]:
             if state is None or state.get("state") != "open":
                 continue
             svc = port_el.find("service")
+            g = (lambda k: svc.get(k) if svc is not None else None)
+            # extrainfo often carries useful detail like "Ubuntu", "protocol 2.0"
+            # or "PHP 8.2"; fold it into version so the UI shows one tidy string.
+            extra = g("extrainfo")
+            version = g("version")
+            if extra:
+                version = f"{version} ({extra})" if version else extra
             services.append({
                 "port": int(port_el.get("portid")),
                 "protocol": port_el.get("protocol", "tcp"),
-                "name": svc.get("name") if svc is not None else None,
-                "product": svc.get("product") if svc is not None else None,
-                "version": svc.get("version") if svc is not None else None,
+                "name": g("name"),
+                "product": g("product"),
+                "version": version,
             })
 
         # nmap can report a host as up with no open ports when service

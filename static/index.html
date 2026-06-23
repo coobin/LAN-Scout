@@ -66,7 +66,8 @@
   .svc.link:hover { background: #20283a; }
   .svc.hidden { opacity: .4; border-style: dashed; }
   .svc .port { font-weight: 700; font-variant-numeric: tabular-nums; }
-  .svc .name { color: var(--muted); } .svc .arrow { margin-left: 1px; }
+  .svc .name { color: var(--accent-2); }
+  .svc .ver { color: var(--muted); font-size: 11.5px; } .svc .arrow { margin-left: 1px; }
   .eye { background: none; border: 0; color: var(--muted); padding: 0 0 0 3px; font-size: 13px; opacity: .6; }
   .eye:hover { opacity: 1; color: var(--text); }
   .no-svc { color: var(--muted); font-size: 12.5px; }
@@ -152,7 +153,9 @@
     <div class="row2">
       <div class="field"><label>nmap 计时模板 (0-5)</label>
         <input type="number" id="f_timing" min="0" max="5"></div>
-      <div class="field"><label style="margin-top:26px"><input type="checkbox" id="f_sv"> 服务/版本探测 (-sV)</label></div>
+      <div class="field"><label>&nbsp;</label>
+        <label class="toggle" style="margin-bottom:8px"><input type="checkbox" id="f_sv"> 服务/版本探测 (-sV)</label>
+        <label class="toggle"><input type="checkbox" id="f_pn"> 跳过主机发现 (-Pn) — 扫指定 IP / 不回 ping 的主机时开启</label></div>
     </div>
     <details open>
       <summary>服务分类（排序 / 颜色 / 显示）</summary>
@@ -289,7 +292,13 @@ function svcChip(ip, s, showHidden){
   if(hidden && !showHidden) return "";
   const cat=catFor(s), url=svcUrl(ip,s);
   const desc=[s.product,s.version].filter(Boolean).join(" ");
-  const inner=`<span class="port">${s.port}</span>`+(s.name?`<span class="name">${esc(s.name)}</span>`:"")+(url?`<span class="arrow">↗</span>`:"");
+  // Prefer the identified product (e.g. "nginx"); fall back to the nmap
+  // service name (e.g. "http"). Show the version dimmed when known.
+  const main=s.product||s.name;
+  const inner=`<span class="port">${s.port}</span>`+
+    (main?`<span class="name">${esc(main)}</span>`:"")+
+    (s.version?`<span class="ver">${esc(s.version)}</span>`:"")+
+    (url?`<span class="arrow">↗</span>`:"");
   const eye=`<button class="eye" title="${hidden?"显示":"隐藏"}" onclick="event.preventDefault();event.stopPropagation();toggleHidden('${ip}',${s.port})">${hidden?"🚫":"👁"}</button>`;
   const style=`style="border-left-color:${cat.color}"`, title=desc?`title="${esc(desc)}"`:"";
   const cls=`svc${url?" link":""}${hidden?" hidden":""}`;
@@ -335,7 +344,10 @@ function categoryView(hosts, showHidden){
     const b=buckets.get(c.id);
     const cards=b.items.sort((a,b)=>a.s.port-b.s.port).map(({h,s})=>{
       const url=svcUrl(h.ip,s), who=(h.label||h.hostname||"")+(h.label||h.hostname?" · ":"")+h.ip;
-      const inner=`<div class="h"><span class="nm">${esc(s.name||"service")}</span><span class="pt">${h.ip}:${s.port}</span></div>
+      const main=s.product||s.name||"service";
+      const ver=[s.product?s.name:null, s.version].filter(Boolean).join(" · ");
+      const inner=`<div class="h"><span class="nm">${esc(main)}</span><span class="pt">${h.ip}:${s.port}</span></div>
+        ${ver?`<div class="who" style="color:var(--accent-2)">${esc(ver)}</div>`:""}
         <div class="who">${esc(who)}</div>`;
       return url
         ? `<a class="svc-card" style="border-left-color:${c.color}" href="${url}" target="_blank" rel="noopener">${inner}</a>`
@@ -357,6 +369,7 @@ function openSettings(){
   document.getElementById("f_interval").value=Math.round(s.interval/60);
   document.getElementById("f_timing").value=s.timing;
   document.getElementById("f_sv").checked=s.service_detection;
+  document.getElementById("f_pn").checked=s.skip_discovery;
   EDIT_CATS=JSON.parse(JSON.stringify(s.categories||[]));
   renderCatEditor();
   document.getElementById("overlay").classList.add("show");
@@ -391,6 +404,7 @@ function saveSettingsForm(){
     interval:(parseInt(document.getElementById("f_interval").value)||0)*60,
     timing:document.getElementById("f_timing").value,
     service_detection:document.getElementById("f_sv").checked,
+    skip_discovery:document.getElementById("f_pn").checked,
     categories:EDIT_CATS,
   });
   closeSettings();

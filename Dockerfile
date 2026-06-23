@@ -1,6 +1,11 @@
 # LAN Scout — discovery dashboard for your local network.
 # nmap is the only system dependency; the app itself is pure stdlib Python.
-FROM python:3.12-slim
+#
+# BASE is overridable so you can build from a registry mirror in networks that
+# can't reach Docker Hub, e.g.:
+#   docker build --build-arg BASE=<mirror>/python:3.12-slim .
+ARG BASE=python:3.12-slim
+FROM ${BASE}
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends nmap \

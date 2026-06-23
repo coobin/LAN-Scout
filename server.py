@@ -29,7 +29,7 @@ def run_scan() -> None:
     scan_id = db.start_scan(targets)
     try:
         hosts = scanner.scan(targets, s["ports"], s["service_detection"],
-                             s["timing"])
+                             s["timing"], s["skip_discovery"])
         db.save_results(hosts)
         db.finish_scan(scan_id, len(hosts))
         print(f"[scan] {targets}: {len(hosts)} host(s) up")

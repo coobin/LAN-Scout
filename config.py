@@ -70,6 +70,10 @@ TIMING = os.environ.get("LANSCOUT_TIMING", "4")
 # Run nmap service/version detection (-sV). Slower but identifies products.
 SERVICE_DETECTION = os.environ.get("LANSCOUT_SV", "1") != "0"
 
+# Skip host discovery (-Pn): treat every target as up and scan its ports.
+# Needed for scanning specific IPs / ping-blocked hosts across subnets.
+SKIP_DISCOVERY = os.environ.get("LANSCOUT_PN", "0") != "0"
+
 # HTTP server bind.
 HOST = os.environ.get("LANSCOUT_HOST", "127.0.0.1")
 PORT = int(os.environ.get("LANSCOUT_PORT", "8770"))
