@@ -281,6 +281,10 @@
     gap: 4px;
     margin-top: 3px;
   }
+  .app-stats-row .ds-group {
+    margin-left: 0;
+    margin-top: 2px;
+  }
   .app-url-row {
     display: inline-flex;
     align-items: center;
@@ -822,9 +826,11 @@ function appCard(it){
     if (!stopped) {
       dockerStats = renderDockerStats(ct);
     } else {
-      dockerStats = `<span class="ds-status" style="margin-left:6px">已停止 (${ct.state || "exited"})</span>`;
+      dockerStats = `<span class="ds-status">已停止 (${ct.state || "exited"})</span>`;
     }
   }
+  
+  const statsHtml = dockerStats ? `<div class="app-stats-row" onclick="event.stopPropagation();">${dockerStats}</div>` : "";
   
   let urlHtml = "";
   if (extUrl) {
@@ -833,12 +839,12 @@ function appCard(it){
         <div class="app-url-row" onclick="event.stopPropagation();">
           <span class="url-badge wan">WAN</span>
           <a href="${esc(extUrl)}" target="_blank" rel="noopener">${esc(extUrl)}</a>
-          ${dockerStats || ""}
         </div>
         <div class="app-url-row" onclick="event.stopPropagation();">
           <span class="url-badge lan">LAN</span>
           <a href="${esc(lanUrl)}" target="_blank" rel="noopener" style="color:var(--muted)">${esc(lanUrl)}</a>
         </div>
+        ${statsHtml}
       </div>
     `;
   } else {
@@ -846,8 +852,8 @@ function appCard(it){
       <div class="app-urls">
         <div class="app-url-row" onclick="event.stopPropagation();">
           <a href="${esc(lanUrl)}" target="_blank" rel="noopener">${esc(lanUrl)}</a>
-          ${dockerStats || ""}
         </div>
+        ${statsHtml}
       </div>
     `;
   }
