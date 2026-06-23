@@ -55,6 +55,7 @@ def init() -> None:
                 product     TEXT,
                 version     TEXT,
                 last_seen   REAL NOT NULL,
+                is_custom   INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (ip, port, protocol)
             );
 
@@ -84,6 +85,10 @@ def init() -> None:
             );
             """
         )
+        try:
+            c.execute("ALTER TABLE services ADD COLUMN is_custom INTEGER NOT NULL DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
 
 
 def get_setting(key: str) -> str | None:
@@ -149,7 +154,7 @@ def save_results(hosts: list[dict]) -> None:
         if seen_ips:
             placeholders = ",".join("?" * len(seen_ips))
             c.execute(
-                f"DELETE FROM services WHERE ip IN ({placeholders})", seen_ips
+                f"DELETE FROM services WHERE ip IN ({placeholders}) AND is_custom=0", seen_ips
             )
         for h in hosts:
             for s in h.get("services", []):
@@ -189,6 +194,67 @@ def update_host_meta(ip: str, label: str | None, note: str | None) -> bool:
             "UPDATE hosts SET label=?, note=? WHERE ip=?", (label, note, ip)
         )
         return cur.rowcount > 0
+
+
+def delete_service(ip: str, port: int) -> bool:
+    with _lock, _conn() as c:
+        cur = c.execute(
+            "DELETE FROM services WHERE ip=? AND port=?", (ip, port)
+        )
+        return cur.rowcount > 0
+
+
+def save_single_docker_host(ip: str, port: int, containers: list[dict]) -> None:
+    now = time.time()
+    with _lock, _conn() as c:
+        c.execute(
+            """
+            INSERT INTO hosts (ip, is_up, first_seen, last_seen)
+            VALUES (?, 1, ?, ?)
+            ON CONFLICT(ip) DO UPDATE SET is_up=1, last_seen=excluded.last_seen
+            """,
+            (ip, now, now)
+        )
+        c.execute(
+            """
+            INSERT OR REPLACE INTO services (ip, port, protocol, name, product, version, last_seen)
+            VALUES (?, ?, 'tcp', 'docker', 'Docker Daemon', '', ?)
+            """,
+            (ip, port, now)
+        )
+        c.execute("DELETE FROM containers WHERE ip=?", (ip,))
+        for ct in containers:
+            c.execute(
+                """
+                INSERT OR REPLACE INTO containers
+                    (ip, name, image, state, status, ports, last_seen)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (ip, ct["name"], ct.get("image"), ct.get("state"),
+                 ct.get("status"), json.dumps(ct.get("ports", [])), now),
+            )
+            
+
+def add_custom_service(ip: str, port: int, name: str) -> bool:
+    now = time.time()
+    with _lock, _conn() as c:
+        c.execute(
+            """
+            INSERT INTO hosts (ip, is_up, first_seen, last_seen)
+            VALUES (?, 1, ?, ?)
+            ON CONFLICT(ip) DO UPDATE SET is_up=1, last_seen=excluded.last_seen
+            """,
+            (ip, now, now)
+        )
+        c.execute(
+            """
+            INSERT OR REPLACE INTO services
+                (ip, port, protocol, name, product, version, last_seen, is_custom)
+            VALUES (?, ?, 'tcp', ?, '', '', ?, 1)
+            """,
+            (ip, port, name, now)
+        )
+        return True
 
 
 def get_hosts() -> list[dict]:

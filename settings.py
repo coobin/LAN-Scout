@@ -25,7 +25,7 @@ _PORTS_RE = re.compile(r"^[0-9,\-]+$")
 _ALLOWED = {
     "targets", "full_targets", "ports", "interval", "service_detection",
     "timing", "skip_discovery", "docker_probe", "view", "host_sort",
-    "categories", "hidden", "renames", "svc_cats",
+    "categories", "hidden", "renames", "svc_cats", "docker_hosts",
 }
 
 
@@ -51,6 +51,7 @@ def defaults() -> dict:
         "hidden": [],            # ["<ip>:<port>", …] individually hidden services
         "renames": {},           # {"<ip>:<port>": "custom name"} per-service labels
         "svc_cats": {},          # {"<ip>:<port>": "<category id>"} manual category
+        "docker_hosts": "",      # space/comma separated manual docker hosts (e.g. "10.1.6.15:2375")
     }
 
 
@@ -80,6 +81,9 @@ def update(patch: dict) -> dict:
 
 
 def _validate(key: str, value, previous):
+    if key == "docker_hosts":
+        tokens = [t for t in re.split(r"[\s,]+", str(value).strip()) if t]
+        return " ".join(t for t in tokens if not t.startswith("-"))
     if key == "targets":
         tokens = [t for t in re.split(r"[\s,]+", str(value).strip()) if t]
         valid = [t for t in tokens if _TARGET_RE.match(t)]

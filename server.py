@@ -60,6 +60,57 @@ def run_scan() -> None:
                     n += len(h["containers"])
             if n:
                 print(f"[scan] docker: {n} container(s) across hosts")
+
+        # Manual docker hosts probe
+        docker_hosts_str = s.get("docker_hosts") or ""
+        if docker_hosts_str:
+            import re
+            tokens = [t.strip() for t in re.split(r"[\s,]+", docker_hosts_str) if t.strip()]
+            by_ip = {h["ip"]: h for h in hosts}
+            for token in tokens:
+                if ":" in token:
+                    ip, port_str = token.split(":", 1)
+                    try:
+                        port = int(port_str)
+                    except ValueError:
+                        ip = token
+                        port = 2375
+                else:
+                    ip = token
+                    port = 2375
+
+                scheme = "https" if port == 2376 else "http"
+                try:
+                    containers = docker_probe._query(f"{scheme}://{ip}:{port}", timeout=4.0)
+                    print(f"[scan] manual docker {token} success: {len(containers)} containers")
+                    if ip in by_ip:
+                        by_ip[ip]["containers"] = containers
+                        svcs = by_ip[ip].setdefault("services", [])
+                        if not any(sv["port"] == port for sv in svcs):
+                            svcs.append({
+                                "port": port,
+                                "protocol": "tcp",
+                                "name": "docker",
+                                "product": "Docker Daemon",
+                                "version": ""
+                            })
+                    else:
+                        by_ip[ip] = {
+                            "ip": ip,
+                            "is_up": 1,
+                            "containers": containers,
+                            "services": [{
+                                "port": port,
+                                "protocol": "tcp",
+                                "name": "docker",
+                                "product": "Docker Daemon",
+                                "version": ""
+                            }]
+                        }
+                except Exception as e:
+                    print(f"[scan] manual docker {token} failed: {e}")
+            hosts = list(by_ip.values())
+
         db.save_results(hosts)
         db.finish_scan(scan_id, len(hosts))
         print(f"[scan] {targets}: {len(hosts)} host(s) up")
@@ -154,13 +205,80 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/settings":
                 updated = settings_mod.update(self._read_json())
                 return self._json({"settings": updated})
-            if self.path.startswith("/api/host/"):
-                ip = self.path[len("/api/host/"):]
+            if self.path == "/api/docker/add":
                 body = self._read_json()
-                ok = db.update_host_meta(
-                    ip, (body.get("label") or "").strip() or None,
-                    (body.get("note") or "").strip() or None)
-                return self._json({"ok": ok}, 200 if ok else 404)
+                address = (body.get("address") or "").strip()
+                if not address:
+                    return self._json({"error": "address is required"}, 400)
+                if ":" in address:
+                    ip, port_str = address.split(":", 1)
+                    try:
+                        port = int(port_str)
+                    except ValueError:
+                        ip = address
+                        port = 2375
+                else:
+                    ip = address
+                    port = 2375
+                
+                import re
+                if not settings_mod._TARGET_RE.match(ip):
+                    return self._json({"error": "invalid host or IP"}, 400)
+                
+                scheme = "https" if port == 2376 else "http"
+                try:
+                    containers = docker_probe._query(f"{scheme}://{ip}:{port}", timeout=5.0)
+                    db.save_single_docker_host(ip, port, containers)
+                    
+                    s = settings_mod.get()
+                    hosts_list = [t.strip() for t in re.split(r"[\s,]+", s.get("docker_hosts") or "") if t.strip()]
+                    clean_address = f"{ip}:{port}"
+                    if clean_address not in hosts_list and ip not in hosts_list:
+                        hosts_list.append(clean_address)
+                        settings_mod.update({"docker_hosts": " ".join(hosts_list)})
+                    
+                    return self._json({
+                        "ok": True,
+                        "ip": ip,
+                        "port": port,
+                        "containers_count": len(containers)
+                    })
+                except Exception as e:
+                    return self._json({"error": f"Failed to connect: {str(e)}"}, 500)
+            if self.path == "/api/service/add":
+                body = self._read_json()
+                ip = (body.get("ip") or "").strip()
+                port = body.get("port")
+                name = (body.get("name") or "").strip()
+                if not ip or port is None or not name:
+                    return self._json({"error": "ip, port, and name are required"}, 400)
+                try:
+                    port = int(port)
+                except ValueError:
+                    return self._json({"error": "invalid port"}, 400)
+                
+                if not settings_mod._TARGET_RE.match(ip):
+                    return self._json({"error": "invalid host or IP"}, 400)
+                
+                ok = db.add_custom_service(ip, port, name)
+                return self._json({"ok": ok}, 200 if ok else 500)
+            if self.path.startswith("/api/host/"):
+                subpath = self.path[len("/api/host/"):]
+                if subpath.endswith("/delete_service"):
+                    ip = subpath[:-len("/delete_service")]
+                    body = self._read_json()
+                    port = body.get("port")
+                    if port is not None:
+                        ok = db.delete_service(ip, int(port))
+                        return self._json({"ok": ok}, 200 if ok else 404)
+                    return self._json({"error": "missing port"}, 400)
+                else:
+                    ip = subpath
+                    body = self._read_json()
+                    ok = db.update_host_meta(
+                        ip, (body.get("label") or "").strip() or None,
+                        (body.get("note") or "").strip() or None)
+                    return self._json({"ok": ok}, 200 if ok else 404)
             return self._json({"error": "unknown endpoint"}, 404)
         except Exception:  # noqa: BLE001
             traceback.print_exc()

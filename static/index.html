@@ -4,18 +4,56 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LAN Scout · 局域网服务导航</title>
+<script>
+  (function() {
+    const theme = localStorage.getItem('theme') || 'auto';
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark-theme');
+    } else if (theme === 'light') {
+      root.classList.add('light-theme');
+    }
+  })();
+</script>
 <style>
   :root {
+    --bg: #f3f4f6; --panel: #ffffff; --panel-2: #f9fafb; --line: #e5e7eb;
+    --text: #111827; --muted: #6b7280; --accent: #3b82f6; --accent-2: #0d9488;
+    --up: #10b981; --down: #9ca3af; --danger: #ef4444; --radius: 14px;
+    --banner-bg: #fef2f2; --banner-text: #b91c1c;
+    --svc-hover: #e5e7eb;
+    --ct-border: #3b82f6;
+    --cport-bg: #eff6ff; --cport-border: #bfdbfe;
+    --header-bg: rgba(255, 255, 255, 0.85);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light-theme) {
+      --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --line: #272c38;
+      --text: #e6e9ef; --muted: #8b93a7; --accent: #4f8cff; --accent-2: #2dd4bf;
+      --up: #34d399; --down: #6b7280; --danger: #f87171;
+      --banner-bg: #3a1d1d; --banner-text: #fca5a5;
+      --svc-hover: #20283a;
+      --ct-border: #2496ed;
+      --cport-bg: #16263a; --cport-border: #2e4a6b;
+      --header-bg: rgba(15, 17, 21, 0.85);
+    }
+  }
+  :root.dark-theme {
     --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --line: #272c38;
     --text: #e6e9ef; --muted: #8b93a7; --accent: #4f8cff; --accent-2: #2dd4bf;
-    --up: #34d399; --down: #6b7280; --danger: #f87171; --radius: 14px;
+    --up: #34d399; --down: #6b7280; --danger: #f87171;
+    --banner-bg: #3a1d1d; --banner-text: #fca5a5;
+    --svc-hover: #20283a;
+    --ct-border: #2496ed;
+    --cport-bg: #16263a; --cport-border: #2e4a6b;
+    --header-bg: rgba(15, 17, 21, 0.85);
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
     font: 15px/1.5 -apple-system, "Segoe UI", Roboto, "PingFang SC", sans-serif; }
   a { color: inherit; }
   header { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px);
-    background: rgba(15,17,21,.82); border-bottom: 1px solid var(--line);
+    background: var(--header-bg); border-bottom: 1px solid var(--line);
     padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
   .logo { width: 26px; height: 26px; border-radius: 8px;
@@ -49,6 +87,8 @@
   .catchip .cnt { color: var(--muted); font-variant-numeric: tabular-nums; }
   .pencil { background: none; border: 0; color: var(--muted); padding: 0 0 0 2px; font-size: 12px; opacity: .55; }
   .pencil:hover { opacity: 1; color: var(--text); }
+  .del { background: none; border: 0; color: var(--muted); padding: 0 0 0 2px; font-size: 12px; opacity: .55; }
+  .del:hover { opacity: 1; color: var(--danger); }
   .catpick { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line);
     border-radius: 6px; font-size: 11px; padding: 1px 3px; max-width: 92px; }
   .catpick:hover { color: var(--text); border-color: var(--accent); }
@@ -76,7 +116,7 @@
   .svc { display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
     background: var(--panel-2); border: 1px solid var(--line); border-left-width: 3px;
     border-radius: 9px; padding: 6px 9px; font-size: 13px; }
-  .svc.link:hover { background: #20283a; }
+  .svc.link:hover { background: var(--svc-hover); }
   .svc.hidden { opacity: .4; border-style: dashed; }
   .svc .port { font-weight: 700; font-variant-numeric: tabular-nums; }
   .svc .name { color: var(--accent-2); }
@@ -88,17 +128,17 @@
   .ct-head { font-size: 12px; color: var(--muted); margin-bottom: 7px; }
   .ct-list { display: flex; flex-direction: column; gap: 5px; max-height: 280px; overflow: auto; }
   .ct { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline;
-    padding: 5px 8px; background: var(--panel-2); border-radius: 8px; border-left: 3px solid #2496ed; }
+    padding: 5px 8px; background: var(--panel-2); border-radius: 8px; border-left: 3px solid var(--ct-border); }
   .ct-name { font-weight: 600; font-size: 13px; word-break: break-all; }
   .ct.stopped { opacity: .5; border-left-color: var(--down); }
   .ct-img { color: var(--muted); font-size: 11px; grid-column: 1; word-break: break-all; }
   .ct-ports { grid-row: 1 / span 2; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
-  .cport { font-size: 12px; text-decoration: none; background: #16263a; border: 1px solid #2e4a6b;
-    border-radius: 6px; padding: 2px 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cport { font-size: 12px; text-decoration: none; background: var(--cport-bg); border: 1px solid var(--cport-border);
+    border-radius: 6px; padding: 2px 6px; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text); }
   .cport:hover { border-color: var(--accent); }
   .cport.int { background: var(--bg); border-color: var(--line); color: var(--muted); }
   .empty { text-align: center; color: var(--muted); padding: 80px 20px; }
-  .banner { background: #3a1d1d; border: 1px solid var(--danger); color: #fca5a5;
+  .banner { background: var(--banner-bg); border: 1px solid var(--danger); color: var(--banner-text);
     padding: 12px 16px; border-radius: 10px; margin-bottom: 18px; }
   /* launchpad (导航) */
   .apps { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
@@ -134,8 +174,10 @@
   .field input[type=text], .field input[type=number] { width: 100%; background: var(--panel-2);
     border: 1px solid var(--line); color: var(--text); padding: 9px 11px; border-radius: 9px; outline: none; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .cat-row { display: grid; grid-template-columns: 22px 1.3fr 1fr 1.4fr auto; gap: 8px; align-items: center;
+  .cat-row { display: grid; grid-template-columns: auto 22px 1.3fr 1fr 1.4fr auto; gap: 8px; align-items: center;
     background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin-bottom: 8px; }
+  .cat-row[draggable=true] { cursor: grab; }
+  .cat-row[draggable=true]:active { cursor: grabbing; }
   .cat-row input[type=text] { width: 100%; background: var(--bg); border: 1px solid var(--line);
     color: var(--text); padding: 6px 8px; border-radius: 7px; outline: none; font-size: 13px; }
   .cat-row input[type=color] { width: 28px; height: 28px; border: 0; background: none; padding: 0; }
@@ -152,6 +194,8 @@
   <span class="spacer"></span>
   <input class="search" id="search" placeholder="搜索 IP / 名称 / 服务 / 厂商…">
   <button class="btn" onclick="openCats()">🏷 分类</button>
+  <button class="btn" id="themeBtn" onclick="toggleTheme()">🌗 自动</button>
+  <button class="btn" onclick="openAddSvc()">➕ 添加服务</button>
   <button class="btn" onclick="openSettings()">⚙ 设置</button>
   <button class="btn primary" id="scanBtn" onclick="triggerScan()">立即扫描</button>
 </header>
@@ -186,6 +230,12 @@
       <input type="text" id="f_targets" placeholder="192.168.1.0/24 10.0.0.0/24"></div>
     <div class="field"><label>完整扫描主机（额外用 -Pn + 全端口单独扫，结果合并；适合本机等普扫漏服务的主机）</label>
       <input type="text" id="f_full" placeholder="留空则关闭，如 10.1.6.15"></div>
+    <div class="field"><label>手动 Docker 目标（IP:端口，支持多个，空格或逗号分隔；添加后将自动持续对其进行容器和服务扫描）</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="f_docker_hosts" placeholder="例如 10.1.6.15:2375" style="flex:1">
+        <button class="btn" id="addDockerBtn" onclick="addDockerAddressFromSettings(event)" style="white-space:nowrap">🐳 探测并添加</button>
+      </div>
+    </div>
     <div class="row2">
       <div class="field"><label>端口列表（逗号分隔，- 表示 top-1000）</label>
         <input type="text" id="f_ports"></div>
@@ -217,6 +267,23 @@
     <div class="modal-actions">
       <button class="btn" onclick="closeCats()">取消</button>
       <button class="btn primary" onclick="saveCats()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="svcOverlay" onclick="if(event.target===this)closeAddSvc()">
+  <div class="modal" style="max-width: 480px">
+    <h2>添加自定义服务</h2>
+    <div class="hint">手动添加局域网内其他未被扫描到的服务。</div>
+    <div class="field"><label>主机 IP</label>
+      <input type="text" id="f_svc_ip" placeholder="例如 192.168.1.100"></div>
+    <div class="field"><label>端口</label>
+      <input type="number" id="f_svc_port" placeholder="例如 80" min="1" max="65535"></div>
+    <div class="field"><label>服务名称</label>
+      <input type="text" id="f_svc_name" placeholder="例如 我的群晖 / 博客"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeAddSvc()">取消</button>
+      <button class="btn primary" onclick="submitAddSvc()">添加</button>
     </div>
   </div>
 </div>
@@ -417,11 +484,12 @@ function svcChip(ip, s, showHidden){
   const stop="event.preventDefault();event.stopPropagation();";
   const pen=`<button class="pencil" title="重命名" onclick="${stop}renameSvc('${ip}',${s.port})">✎</button>`;
   const eye=`<button class="eye" title="${hidden?"显示":"隐藏"}" onclick="${stop}toggleHidden('${ip}',${s.port})">${hidden?"🚫":"👁"}</button>`;
+  const del=`<button class="del" title="删除服务" onclick="${stop}deleteSvc('${ip}',${s.port})">✕</button>`;
   const style=`style="border-left-color:${cat.color}"`, title=desc?`title="${esc(desc)}"`:"";
   const cls=`svc${url?" link":""}${hidden?" hidden":""}`;
   return url
-    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${catSelect(ip,s.port,cat.id)}${pen}${eye}</span>`
-    : `<span class="${cls}" ${style} ${title}>${inner}${catSelect(ip,s.port,cat.id)}${pen}${eye}</span>`;
+    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${catSelect(ip,s.port,cat.id)}${pen}${eye}${del}</span>`
+    : `<span class="${cls}" ${style} ${title}>${inner}${catSelect(ip,s.port,cat.id)}${pen}${eye}${del}</span>`;
 }
 
 function containerRow(ip, ct){
@@ -441,45 +509,32 @@ function containerRow(ip, ct){
   </div>`;
 }
 
-// Classify a docker container by its image so the launchpad can skip
-// non-browser services (databases, caches, FTP, message queues, …).
-function dockerKind(image){
-  const s=(image||"").toLowerCase();
-  if(/postgres|mysql|mariadb|mongo|redis|memcached|elasticsearch|clickhouse|rabbitmq|kafka|zookeeper|etcd|influxdb|cassandra|nats|consul/.test(s)) return "infra";
-  if(/vsftpd|proftpd|pure-?ftpd|\bftp\b/.test(s)) return "ftp";
-  return "web";
-}
-
 // 导航 / launchpad: only things you can actually open — web services and
 // published docker ports — as a clean address book grouped by category.
 function navView(hosts, showHidden){
   const renames=STATE.settings.renames||{}, hiddenSet=new Set(STATE.settings.hidden||[]);
   const dockerPub=new Set(), items=[];
-  const pushItem=(cat,key,name,url,host,ip,port,hidden)=>{
+  const pushItem=(cat,key,name,url,host,ip,port,hidden,isDocker)=>{
     if(activeCat && cat.id!==activeCat) return;
     if(hidden && !showHidden) return;
-    items.push({cat,key,name,url,host,ip,port,hidden});
+    items.push({cat,key,name,url,host,ip,port,hidden,isDocker});
   };
   for(const h of hosts){ if(!h.is_up) continue;
     for(const ct of (h.containers||[])){
-      const kind=dockerKind(ct.image);
       for(const p of (ct.ports||[])){
         if(!p.public) continue;
         const key=h.ip+":"+p.public; dockerPub.add(key);
-        // Only web apps belong on a launchpad — skip databases, caches, FTP,
-        // and other non-browser services (they remain in the 详细 view).
-        if(kind!=="web") continue;
         const cat=catForSvc(h.ip,{port:p.public,name:""});
         const hid=hiddenSet.has(key) || cat.visible===false;
         const scheme=HTTPS_PORTS.has(p.public)?"https":"http";
-        pushItem(cat,key,renames[key]||ct.name,`${scheme}://${h.ip}:${p.public}`,h,h.ip,p.public,hid);
+        pushItem(cat,key,renames[key]||ct.name,`${scheme}://${h.ip}:${p.public}`,h,h.ip,p.public,hid,true);
       }
     }
     for(const s of (h.services||[])){
       const url=svcUrl(h.ip,s); if(!url) continue;
       const key=h.ip+":"+s.port;
       if(dockerPub.has(key)) continue;            // already shown as a container
-      pushItem(catForSvc(h.ip,s),key,svcName(h.ip,s),url,h,h.ip,s.port,isHidden(h.ip,s));
+      pushItem(catForSvc(h.ip,s),key,svcName(h.ip,s),url,h,h.ip,s.port,isHidden(h.ip,s),false);
     }
   }
   if(!items.length) return `<div class="empty">没有可访问的服务。换「详细」视图看完整扫描结果，或点「立即扫描」。</div>`;
@@ -496,12 +551,14 @@ function navView(hosts, showHidden){
 function appCard(it){
   const who=(it.host.label||it.host.hostname||"")+(it.host.label||it.host.hostname?" · ":"")+it.ip;
   const stop="event.preventDefault();event.stopPropagation();";
+  const del = !it.isDocker ? `<button class="del" title="删除服务" onclick="${stop}deleteSvc('${it.ip}',${it.port})">✕</button>` : "";
   return `<a class="app ${it.hidden?"hidden":""}" href="${it.url}" target="_blank" rel="noopener"
       style="border-left-color:${it.cat.color}">
     <div class="acts">
       ${catSelect(it.ip,it.port,it.cat.id)}
       <button class="pencil" title="重命名" onclick="${stop}renameSvc('${it.ip}',${it.port})">✎</button>
       <button class="eye" title="${it.hidden?"显示":"隐藏"}" onclick="${stop}toggleHidden('${it.ip}',${it.port})">${it.hidden?"🚫":"👁"}</button>
+      ${del}
     </div>
     <div class="an">${esc(it.name)}</div>
     <div class="au">${esc(it.url)}</div>
@@ -540,6 +597,7 @@ function openSettings(){
   const s=STATE.settings;
   document.getElementById("f_targets").value=s.targets;
   document.getElementById("f_full").value=s.full_targets||"";
+  document.getElementById("f_docker_hosts").value=s.docker_hosts||"";
   document.getElementById("f_ports").value=s.ports;
   document.getElementById("f_interval").value=Math.round(s.interval/60);
   document.getElementById("f_timing").value=s.timing;
@@ -562,18 +620,29 @@ function saveCats(){
   saveSettings({categories:EDIT_CATS});
   closeCats();
 }
+let dragIdx = null;
+function dragCat(e, i) { dragIdx = i; e.dataTransfer.effectAllowed = 'move'; }
+function dragOverCat(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function dropCat(e, i) {
+  e.preventDefault();
+  if (dragIdx === null || dragIdx === i) return;
+  const item = EDIT_CATS.splice(dragIdx, 1)[0];
+  EDIT_CATS.splice(i, 0, item);
+  EDIT_CATS.forEach((c,k)=>c.order=k+1);
+  renderCatEditor();
+}
+
 function renderCatEditor(){
   EDIT_CATS.sort((a,b)=>a.order-b.order);
   document.getElementById("catEditor").innerHTML=EDIT_CATS.map((c,i)=>`
-    <div class="cat-row">
+    <div class="cat-row" draggable="true" ondragstart="dragCat(event, ${i})" ondragover="dragOverCat(event)" ondrop="dropCat(event, ${i})">
+      <div style="color:var(--muted);padding:0 4px">☰</div>
       <input type="color" value="${c.color}" onchange="EDIT_CATS[${i}].color=this.value">
       <input type="text" value="${esc(c.name)}" placeholder="名称" oninput="EDIT_CATS[${i}].name=this.value">
       <input type="text" value="${(c.ports||[]).join(',')}" placeholder="端口" oninput="EDIT_CATS[${i}].ports=this.value.split(',').map(x=>parseInt(x)).filter(Boolean)">
       <input type="text" value="${(c.services||[]).join(',')}" placeholder="服务名" oninput="EDIT_CATS[${i}].services=this.value.split(',').map(x=>x.trim()).filter(Boolean)">
       <div style="display:flex;gap:4px;align-items:center">
         <button class="mini" title="显示/隐藏" onclick="EDIT_CATS[${i}].visible=!EDIT_CATS[${i}].visible;renderCatEditor()">${c.visible!==false?"👁":"🚫"}</button>
-        <button class="mini" onclick="moveCat(${i},-1)">↑</button>
-        <button class="mini" onclick="moveCat(${i},1)">↓</button>
         <button class="mini" onclick="EDIT_CATS.splice(${i},1);renderCatEditor()">✕</button>
       </div>
     </div>`).join("");
@@ -588,6 +657,7 @@ function saveSettingsForm(){
   saveSettings({
     targets:document.getElementById("f_targets").value,
     full_targets:document.getElementById("f_full").value,
+    docker_hosts:document.getElementById("f_docker_hosts").value,
     ports:document.getElementById("f_ports").value,
     interval:(parseInt(document.getElementById("f_interval").value)||0)*60,
     timing:document.getElementById("f_timing").value,
@@ -598,7 +668,138 @@ function saveSettingsForm(){
   closeSettings();
 }
 
+function applyTheme(theme) {
+  const root = document.documentElement;
+  if (theme === 'dark') {
+    root.classList.add('dark-theme');
+    root.classList.remove('light-theme');
+  } else if (theme === 'light') {
+    root.classList.add('light-theme');
+    root.classList.remove('dark-theme');
+  } else {
+    root.classList.remove('dark-theme', 'light-theme');
+  }
+  
+  const themeBtn = document.getElementById('themeBtn');
+  if (themeBtn) {
+    let icon = '🌗';
+    let label = '自动';
+    if (theme === 'dark') {
+      icon = '🌙';
+      label = '深色';
+    } else if (theme === 'light') {
+      icon = '☀️';
+      label = '浅色';
+    }
+    themeBtn.innerHTML = `${icon} ${label}`;
+  }
+}
+
+function toggleTheme() {
+  const themes = ['auto', 'light', 'dark'];
+  let current = localStorage.getItem('theme') || 'auto';
+  let nextIdx = (themes.indexOf(current) + 1) % themes.length;
+  let next = themes[nextIdx];
+  localStorage.setItem('theme', next);
+  applyTheme(next);
+}
+
+async function deleteSvc(ip, port) {
+  if (!confirm(`确认要删除 ${ip}:${port} 上的服务吗？`)) return;
+  try {
+    const res = await fetch(`/api/host/${ip}/delete_service`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ port: parseInt(port) })
+    });
+    if (res.ok) {
+      const host = STATE.hosts.find(h => h.ip === ip);
+      if (host && host.services) {
+        host.services = host.services.filter(s => s.port !== port);
+      }
+      render();
+    } else {
+      alert("删除服务失败");
+    }
+  } catch (e) {
+    alert("删除服务发生错误");
+  }
+}
+
+async function addDockerAddressFromSettings(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  const addr = prompt("请输入 Docker 守护进程地址（例如 10.1.6.15 或 10.1.6.15:2375）：");
+  if (!addr || !addr.trim()) return;
+  
+  const btn = document.getElementById("addDockerBtn");
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "探测中…";
+  
+  try {
+    const res = await fetch("/api/docker/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address: addr.trim() })
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      alert(`成功连接到 Docker，发现 ${data.containers_count} 个容器！`);
+      const input = document.getElementById("f_docker_hosts");
+      const current = input.value.trim();
+      const clean_address = `${data.ip}:${data.port}`;
+      if (!current.includes(clean_address) && !current.includes(data.ip)) {
+        input.value = current ? `${current} ${clean_address}` : clean_address;
+      }
+      load();
+    } else {
+      alert(`添加 Docker 失败：${data.error || '未知错误'}`);
+    }
+  } catch (e) {
+    alert("网络请求失败，请检查服务状态");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+}
+
+function openAddSvc(){
+  document.getElementById("f_svc_ip").value = "";
+  document.getElementById("f_svc_port").value = "";
+  document.getElementById("f_svc_name").value = "";
+  document.getElementById("svcOverlay").classList.add("show");
+}
+function closeAddSvc(){ document.getElementById("svcOverlay").classList.remove("show"); }
+async function submitAddSvc(){
+  const ip = document.getElementById("f_svc_ip").value.trim();
+  const port = parseInt(document.getElementById("f_svc_port").value);
+  const name = document.getElementById("f_svc_name").value.trim();
+  
+  if(!ip || isNaN(port) || !name){
+    alert("请完整填写 IP、端口和服务名称");
+    return;
+  }
+  
+  try {
+    const res = await fetch("/api/service/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ip, port, name })
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      closeAddSvc();
+      load();
+    } else {
+      alert("添加服务失败：" + (data.error || "未知错误"));
+    }
+  } catch (e) {
+    alert("网络请求失败");
+  }
+}
+
 document.getElementById("search").addEventListener("input", render);
+applyTheme(localStorage.getItem('theme') || 'auto');
 load();
 </script>
 </body>
