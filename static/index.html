@@ -150,8 +150,10 @@
     border-radius: 14px; padding: 14px 16px; transition: border-color .12s, transform .12s; }
   .app:hover { border-color: var(--accent); transform: translateY(-1px); }
   .app.hidden { opacity: .45; border-style: dashed; }
-  .app .an { font-weight: 700; font-size: 15px; word-break: break-all; padding-right: 40px; }
-  .app .au { color: var(--accent); font-size: 13px; font-variant-numeric: tabular-nums; word-break: break-all; }
+  .app .an { font-weight: 700; font-size: 15px; padding-right: 40px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .app .au { color: var(--accent); font-size: 12.5px; font-variant-numeric: tabular-nums;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .app .ah { color: var(--muted); font-size: 12px; }
   .app .acts { position: absolute; top: 8px; right: 8px; display: flex; gap: 2px; opacity: 0; transition: opacity .12s; }
   .app:hover .acts { opacity: 1; }
@@ -189,154 +191,62 @@
   .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
   details summary { cursor: pointer; color: var(--muted); margin: 10px 0; }
   
-  /* Docker dynamic stats indicator styling */
-  .ds-group {
+  /* Docker stats: compact pill badges */
+  .ds-pills {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    vertical-align: middle;
-    margin-left: 6px;
+    gap: 5px;
     font-size: 11px;
-  }
-  .ds-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--panel-2);
-    padding: 2px 6px;
-    border-radius: 6px;
-    border: 1px solid var(--line);
     font-variant-numeric: tabular-nums;
-    color: var(--text);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
   }
-  .ds-label {
-    color: var(--muted);
-    font-weight: 700;
-    font-size: 9px;
-    text-transform: uppercase;
-  }
-  .ds-track {
-    width: 32px;
-    height: 6px;
-    background: var(--line);
-    border-radius: 3px;
-    overflow: hidden;
-    position: relative;
-    display: inline-block;
-  }
-  .ds-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-  /* Shimmer / light sweep effect */
-  .ds-fill::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.45) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    animation: ds-shimmer 2s infinite;
-  }
-  @keyframes ds-shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-  /* Load level coloring */
-  .ds-danger {
-    background-color: var(--danger);
-    animation: ds-pulse 0.8s infinite alternate;
-  }
-  .ds-warning {
-    background-color: #f59e0b;
-  }
-  .ds-normal {
-    background-color: var(--accent-2);
-  }
-  @keyframes ds-pulse {
-    0% { opacity: 0.75; }
-    100% { opacity: 1; filter: drop-shadow(0 0 2px var(--danger)); }
-  }
-  .ds-val {
-    font-weight: 600;
-    font-size: 10.5px;
-  }
-  .ds-status {
-    font-size: 11px;
-    color: var(--muted);
-  }
-  
-  /* WAN & LAN URL display styles */
-  .app-urls {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 3px;
-  }
-  .app-stats-row .ds-group {
-    margin-left: 0;
-    margin-top: 2px;
-  }
-  .app-url-row {
+  .ds-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .ds-pill .ds-lbl { font-weight: 700; font-size: 9px; text-transform: uppercase; opacity: .7; }
+  .ds-pill.ok   { background: color-mix(in srgb, var(--accent-2) 15%, transparent); color: var(--accent-2); }
+  .ds-pill.warn { background: color-mix(in srgb, #f59e0b 15%, transparent); color: #d97706; }
+  .ds-pill.crit { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+  .ds-stopped { font-size: 11px; color: var(--muted); }
+
+  /* WAN / LAN URL display */
+  .app-url-line {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     font-size: 12.5px;
     font-variant-numeric: tabular-nums;
-    line-height: 1.4;
+    line-height: 1.35;
+    min-width: 0;
   }
-  .app-url-row a {
+  .app-url-line a {
     color: var(--accent);
     text-decoration: none;
-    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
-  .app-url-row a:hover {
-    text-decoration: underline;
-  }
-  .url-badge {
-    font-size: 8.5px;
+  .app-url-line a:hover { text-decoration: underline; }
+  .app-url-line a.lan-link { color: var(--muted); font-size: 11.5px; }
+  .url-tag {
+    font-size: 8px;
     font-weight: 800;
-    padding: 1.5px 4.5px;
-    border-radius: 4px;
+    padding: 1px 4px;
+    border-radius: 3px;
     text-transform: uppercase;
     flex-shrink: 0;
     line-height: 1;
     letter-spacing: 0.5px;
   }
-  .url-badge.wan {
-    background: #eff6ff;
-    color: #1d4ed8;
-    border: 1px solid #bfdbfe;
-  }
-  :root.dark-theme .url-badge.wan,
-  @media (prefers-color-scheme: dark) {
-    :root:not(.light-theme) .url-badge.wan {
-      background: #1e293b;
-      color: #60a5fa;
-      border: 1px solid #334155;
-    }
-  }
-  .url-badge.lan {
-    background: #f0fdf4;
-    color: #15803d;
-    border: 1px solid #bbf7d0;
-  }
-  :root.dark-theme .url-badge.lan,
-  @media (prefers-color-scheme: dark) {
-    :root:not(.light-theme) .url-badge.lan {
-      background: #14532d;
-      color: #4ade80;
-      border: 1px solid #166534;
-    }
-  }
+  .url-tag.wan { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+  .url-tag.lan { background: color-mix(in srgb, var(--up) 14%, transparent); color: var(--up); }
 </style>
 </head>
 <body>
@@ -677,64 +587,24 @@ function svcChip(ip, s, showHidden){
 
 function renderDockerStats(ct) {
   if (!ct) return "";
-  let html = `<span class="ds-group" onclick="event.stopPropagation();" onmousedown="event.stopPropagation();">`;
-  let hasStats = false;
-  
-  // CPU 解析
+  const pills = [];
   if (ct.cpu) {
-    const match = ct.cpu.match(/([0-9.]+)\s*%/);
-    if (match) {
-      const val = parseFloat(match[1]);
-      let cls = "ds-normal";
-      if (val > 80) cls = "ds-danger";
-      else if (val > 40) cls = "ds-warning";
-      html += `
-        <span class="ds-item" title="CPU 占用率: ${val}%">
-          <span class="ds-label">CPU</span>
-          <span class="ds-track">
-            <span class="ds-fill ${cls}" style="width: ${Math.min(val, 100)}%"></span>
-          </span>
-          <span class="ds-val">${val}%</span>
-        </span>
-      `;
-      hasStats = true;
+    const m = ct.cpu.match(/([0-9.]+)\s*%/);
+    if (m) {
+      const v = parseFloat(m[1]);
+      const c = v > 80 ? "crit" : v > 40 ? "warn" : "ok";
+      pills.push(`<span class="ds-pill ${c}" title="CPU ${v}%"><span class="ds-lbl">CPU</span>${v}%</span>`);
     }
   }
-  
-  // Mem 解析
   if (ct.mem) {
-    const pctMatch = ct.mem.match(/\(([0-9.]+)%\)/);
-    const mbMatch = ct.mem.match(/([0-9.]+)\s*MB/);
-    if (pctMatch && mbMatch) {
-      const val = parseFloat(pctMatch[1]);
-      const mb = parseFloat(mbMatch[1]);
-      let cls = "ds-normal";
-      if (val > 85) cls = "ds-danger";
-      else if (val > 55) cls = "ds-warning";
-      html += `
-        <span class="ds-item" title="内存占用率: ${val}% (已用: ${mb}MB)">
-          <span class="ds-label">MEM</span>
-          <span class="ds-track">
-            <span class="ds-fill ${cls}" style="width: ${Math.min(val, 100)}%"></span>
-          </span>
-          <span class="ds-val">${mb}M</span>
-        </span>
-      `;
-      hasStats = true;
-    } else if (mbMatch) {
-      const mb = parseFloat(mbMatch[1]);
-      html += `
-        <span class="ds-item" title="内存已用: ${mb}MB">
-          <span class="ds-label">MEM</span>
-          <span class="ds-val">${mb}M</span>
-        </span>
-      `;
-      hasStats = true;
+    const pm = ct.mem.match(/\(([0-9.]+)%\)/), mm = ct.mem.match(/([0-9.]+)\s*MB/);
+    if (mm) {
+      const mb = parseFloat(mm[1]), pct = pm ? parseFloat(pm[1]) : 0;
+      const c = pct > 85 ? "crit" : pct > 55 ? "warn" : "ok";
+      pills.push(`<span class="ds-pill ${c}" title="内存 ${mb}MB (${pct}%)"><span class="ds-lbl">MEM</span>${mb}M</span>`);
     }
   }
-  
-  html += `</span>`;
-  return hasStats ? html : "";
+  return pills.length ? `<span class="ds-pills">${pills.join("")}</span>` : "";
 }
 
 function containerRow(ip, ct){
@@ -752,10 +622,10 @@ function containerRow(ip, ct){
   if (!stopped) {
     statsHtml = renderDockerStats(ct);
     if (ct.status) {
-      statsHtml += ` <span class="ds-status" style="margin-left:4px">· ${esc(ct.status.replace("Up ", ""))}</span>`;
+      statsHtml += ` <span class="ds-stopped" style="margin-left:4px">· ${esc(ct.status.replace("Up ", ""))}</span>`;
     }
   } else {
-    statsHtml = `<span class="ds-status">已停止 (${ct.state || "exited"})</span>`;
+    statsHtml = `<span class="ds-stopped">已停止 (${ct.state || "exited"})</span>`;
   }
   
   return `<div class="ct ${stopped?"stopped":""}">
@@ -791,7 +661,7 @@ function navView(hosts, showHidden){
     for(const s of (h.services||[])){
       const url=svcUrl(h.ip,s); if(!url) continue;
       const key=h.ip+":"+s.port;
-      if(dockerPub.has(key)) continue;            // already shown as a container
+      if(dockerPub.has(key)) continue;
       pushItem(catForSvc(h.ip,s),key,svcName(h.ip,s),url,h,h.ip,s.port,isHidden(h.ip,s),false);
     }
   }
@@ -802,62 +672,47 @@ function navView(hosts, showHidden){
     if(!its.length) return "";
     return `<div class="cat-section">
       <div class="cat-head"><span class="swatch" style="background:${c.color}"></span>
-         <h2>${esc(c.name)}</h2><span class="count">${its.length}</span></div>
+        <h2>${esc(c.name)}</h2><span class="count">${its.length}</span></div>
       <div class="apps">${its.map(appCard).join("")}</div></div>`;
   }).join("");
 }
 function appCard(it){
-  const who=(it.host.label||it.host.hostname||"")+(it.host.label||it.host.hostname?" · ":"")+it.ip;
   const stop="event.preventDefault();event.stopPropagation();";
   const del = !it.isDocker ? `<button class="del" title="删除服务" onclick="${stop}deleteSvc('${it.ip}',${it.port})">✕</button>` : "";
-  
   const key = it.ip + ":" + it.port;
   const extUrl = (STATE.settings.ext_urls || {})[key];
   const scheme = HTTPS_PORTS.has(it.port) ? "https" : "http";
   const lanUrl = `${scheme}://${it.ip}:${it.port}`;
-  
   const extCls = extUrl ? "ext active" : "ext";
   const ext = `<button class="${extCls}" title="设置外网地址 (当前: ${esc(extUrl || "未配置")})" onclick="${stop}setExtUrl('${it.ip}',${it.port})">🌐</button>`;
-  
-  let dockerStats = "";
+
+  let statsHtml = "";
   if (it.isDocker && it.container) {
     const ct = it.container;
     const stopped = ct.state && ct.state !== "running";
-    if (!stopped) {
-      dockerStats = renderDockerStats(ct);
-    } else {
-      dockerStats = `<span class="ds-status">已停止 (${ct.state || "exited"})</span>`;
-    }
+    statsHtml = stopped
+      ? `<span class="ds-stopped">已停止</span>`
+      : renderDockerStats(ct);
   }
-  
-  const statsHtml = dockerStats ? `<div class="app-stats-row" onclick="event.stopPropagation();">${dockerStats}</div>` : "";
-  
-  let urlHtml = "";
+
+  let urlBlock = "";
   if (extUrl) {
-    urlHtml = `
-      <div class="app-urls">
-        <div class="app-url-row" onclick="event.stopPropagation();">
-          <span class="url-badge wan">WAN</span>
-          <a href="${esc(extUrl)}" target="_blank" rel="noopener">${esc(extUrl)}</a>
-        </div>
-        <div class="app-url-row" onclick="event.stopPropagation();">
-          <span class="url-badge lan">LAN</span>
-          <a href="${esc(lanUrl)}" target="_blank" rel="noopener" style="color:var(--muted)">${esc(lanUrl)}</a>
-        </div>
-        ${statsHtml}
+    urlBlock = `
+      <div class="app-url-line" onclick="event.stopPropagation();">
+        <span class="url-tag wan">WAN</span>
+        <a href="${esc(extUrl)}" target="_blank" rel="noopener">${esc(extUrl)}</a>
       </div>
-    `;
+      <div class="app-url-line" onclick="event.stopPropagation();">
+        <span class="url-tag lan">LAN</span>
+        <a class="lan-link" href="${esc(lanUrl)}" target="_blank" rel="noopener">${esc(lanUrl)}</a>
+      </div>`;
   } else {
-    urlHtml = `
-      <div class="app-urls">
-        <div class="app-url-row" onclick="event.stopPropagation();">
-          <a href="${esc(lanUrl)}" target="_blank" rel="noopener">${esc(lanUrl)}</a>
-        </div>
-        ${statsHtml}
-      </div>
-    `;
+    urlBlock = `
+      <div class="app-url-line" onclick="event.stopPropagation();">
+        <a href="${esc(lanUrl)}" target="_blank" rel="noopener">${esc(lanUrl)}</a>
+      </div>`;
   }
-  
+
   return `<div class="app ${it.hidden?"hidden":""}" onclick="window.open('${it.url}', '_blank', 'noopener')"
       style="border-left-color:${it.cat.color}; cursor: pointer;">
     <div class="acts" onclick="event.stopPropagation();" onmousedown="event.stopPropagation();">
@@ -868,7 +723,8 @@ function appCard(it){
       ${ext}
     </div>
     <div class="an">${esc(it.name)}</div>
-    ${urlHtml}
+    ${urlBlock}
+    ${statsHtml ? `<div onclick="event.stopPropagation();">${statsHtml}</div>` : ""}
   </div>`;
 }
 
