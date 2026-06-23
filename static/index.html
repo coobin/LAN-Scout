@@ -144,6 +144,8 @@
     <div class="hint">修改后点「保存」生效；网段/间隔的更改下次扫描时应用。</div>
     <div class="field"><label>扫描目标（网段 / IP / 范围，支持多个，空格或逗号分隔）</label>
       <input type="text" id="f_targets" placeholder="192.168.1.0/24 10.0.0.0/24"></div>
+    <div class="field"><label>完整扫描主机（额外用 -Pn + 全端口单独扫，结果合并；适合本机等普扫漏服务的主机）</label>
+      <input type="text" id="f_full" placeholder="留空则关闭，如 10.1.6.15"></div>
     <div class="row2">
       <div class="field"><label>端口列表（逗号分隔，- 表示 top-1000）</label>
         <input type="text" id="f_ports"></div>
@@ -365,6 +367,7 @@ function categoryView(hosts, showHidden){
 function openSettings(){
   const s=STATE.settings;
   document.getElementById("f_targets").value=s.targets;
+  document.getElementById("f_full").value=s.full_targets||"";
   document.getElementById("f_ports").value=s.ports;
   document.getElementById("f_interval").value=Math.round(s.interval/60);
   document.getElementById("f_timing").value=s.timing;
@@ -400,6 +403,7 @@ function saveSettingsForm(){
   EDIT_CATS.forEach((c,k)=>c.order=k+1);
   saveSettings({
     targets:document.getElementById("f_targets").value,
+    full_targets:document.getElementById("f_full").value,
     ports:document.getElementById("f_ports").value,
     interval:(parseInt(document.getElementById("f_interval").value)||0)*60,
     timing:document.getElementById("f_timing").value,

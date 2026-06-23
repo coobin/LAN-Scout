@@ -23,14 +23,17 @@ _PORTS_RE = re.compile(r"^[0-9,\-]+$")
 
 # Keys we accept from clients, with their type validators applied in update().
 _ALLOWED = {
-    "targets", "ports", "interval", "service_detection", "timing",
-    "skip_discovery", "view", "host_sort", "categories", "hidden",
+    "targets", "full_targets", "ports", "interval", "service_detection",
+    "timing", "skip_discovery", "view", "host_sort", "categories", "hidden",
 }
 
 
 def defaults() -> dict:
     return {
         "targets": config.SUBNET,
+        # Always scanned with -Pn + all ports, then merged in. For boxes a fast
+        # sweep under-reports (notably the host running LAN Scout itself).
+        "full_targets": config.FULL_TARGETS,
         "ports": config.PORTS,
         "interval": config.SCAN_INTERVAL,
         "service_detection": config.SERVICE_DETECTION,
@@ -76,6 +79,10 @@ def _validate(key: str, value, previous):
         tokens = [t for t in re.split(r"[\s,]+", str(value).strip()) if t]
         valid = [t for t in tokens if _TARGET_RE.match(t)]
         return " ".join(valid) if valid else previous
+    if key == "full_targets":
+        # Same validation as targets, but an empty value is allowed (= disabled).
+        tokens = [t for t in re.split(r"[\s,]+", str(value).strip()) if t]
+        return " ".join(t for t in tokens if _TARGET_RE.match(t))
     if key == "ports":
         s = str(value).strip()
         if s == "-" or _PORTS_RE.match(s):

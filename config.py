@@ -74,6 +74,11 @@ SERVICE_DETECTION = os.environ.get("LANSCOUT_SV", "1") != "0"
 # Needed for scanning specific IPs / ping-blocked hosts across subnets.
 SKIP_DISCOVERY = os.environ.get("LANSCOUT_PN", "0") != "0"
 
+# Hosts that always get a thorough pass: scanned separately with -Pn over ALL
+# 65535 ports, then merged into the results. Good for boxes whose many services
+# a fast subnet sweep misses (e.g. the host running LAN Scout itself).
+FULL_TARGETS = os.environ.get("LANSCOUT_FULL_TARGETS", "")
+
 # HTTP server bind.
 HOST = os.environ.get("LANSCOUT_HOST", "127.0.0.1")
 PORT = int(os.environ.get("LANSCOUT_PORT", "8770"))

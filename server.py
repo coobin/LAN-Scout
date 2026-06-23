@@ -22,6 +22,14 @@ import settings as settings_mod
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
 
+def _merge_hosts(base: list[dict], extra: list[dict]) -> list[dict]:
+    """Merge two host lists by IP; the thorough (full-port) entry wins."""
+    by_ip = {h["ip"]: h for h in base}
+    for h in extra:  # full-scan results override the sweep's partial view
+        by_ip[h["ip"]] = h
+    return list(by_ip.values())
+
+
 def run_scan() -> None:
     """Execute one scan and persist it. Swallows errors into the scans table."""
     s = settings_mod.get()
@@ -30,6 +38,15 @@ def run_scan() -> None:
     try:
         hosts = scanner.scan(targets, s["ports"], s["service_detection"],
                              s["timing"], s["skip_discovery"])
+        # Thorough pass: specific hosts a fast sweep under-reports (e.g. the box
+        # running LAN Scout, whose docker-published ports get missed) get a full
+        # -Pn / all-ports scan that's merged in.
+        full = (s.get("full_targets") or "").strip()
+        if full:
+            extra = scanner.scan(full, "1-65535", s["service_detection"],
+                                 s["timing"], skip_discovery=True)
+            hosts = _merge_hosts(hosts, extra)
+            print(f"[scan] full pass {full}: +{len(extra)} host(s)")
         db.save_results(hosts)
         db.finish_scan(scan_id, len(hosts))
         print(f"[scan] {targets}: {len(hosts)} host(s) up")
