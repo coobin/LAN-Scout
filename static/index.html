@@ -341,10 +341,12 @@ async function assignCat(ip, port, catId){
   saveSettings({svc_cats:m});
 }
 function catSelect(ip, port, curId){
+  const def = catFor({port: port});
+  const defOpt = `<option value="" ${!curId?"selected":""}>默认 (${def.name})</option>`;
   const opts=allCats().map(c=>`<option value="${c.id}" ${c.id===curId?"selected":""}>${esc(c.name)}</option>`).join("");
   const stop="event.stopPropagation();";
   return `<select class="catpick" title="归类" onclick="${stop}" onmousedown="${stop}"
-    onchange="event.preventDefault();${stop}assignCat('${ip}',${port},this.value)">${opts}</select>`;
+    onchange="event.preventDefault();${stop}assignCat('${ip}',${port},this.value)">${defOpt}${opts}</select>`;
 }
 // Display name: user rename wins, else identified product, else nmap name.
 function svcName(ip, s){
@@ -488,8 +490,8 @@ function svcChip(ip, s, showHidden){
   const style=`style="border-left-color:${cat.color}"`, title=desc?`title="${esc(desc)}"`:"";
   const cls=`svc${url?" link":""}${hidden?" hidden":""}`;
   return url
-    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${catSelect(ip,s.port,cat.id)}${pen}${eye}${del}</span>`
-    : `<span class="${cls}" ${style} ${title}>${inner}${catSelect(ip,s.port,cat.id)}${pen}${eye}${del}</span>`;
+    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${catSelect(ip,s.port,(STATE.settings.svc_cats||{})[ip+":"+s.port])}${pen}${eye}${del}</span>`
+    : `<span class="${cls}" ${style} ${title}>${inner}${catSelect(ip,s.port,(STATE.settings.svc_cats||{})[ip+":"+s.port])}${pen}${eye}${del}</span>`;
 }
 
 function containerRow(ip, ct){
@@ -582,7 +584,7 @@ function appCard(it){
   return `<a class="app ${it.hidden?"hidden":""}" href="${it.url}" target="_blank" rel="noopener"
       style="border-left-color:${it.cat.color}">
     <div class="acts">
-      ${catSelect(it.ip,it.port,it.cat.id)}
+      ${catSelect(it.ip,it.port,(STATE.settings.svc_cats||{})[it.ip+":"+it.port])}
       <button class="pencil" title="重命名" onclick="${stop}renameSvc('${it.ip}',${it.port})">✎</button>
       <button class="eye" title="${it.hidden?"显示":"隐藏"}" onclick="${stop}toggleHidden('${it.ip}',${it.port})">${it.hidden?"🚫":"👁"}</button>
       ${del}
