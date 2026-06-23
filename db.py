@@ -81,12 +81,22 @@ def init() -> None:
                 status    TEXT,
                 ports     TEXT,              -- JSON: [{public,private,type}]
                 last_seen REAL NOT NULL,
+                cpu       TEXT,
+                mem       TEXT,
                 PRIMARY KEY (ip, name)
             );
             """
         )
         try:
             c.execute("ALTER TABLE services ADD COLUMN is_custom INTEGER NOT NULL DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            c.execute("ALTER TABLE containers ADD COLUMN cpu TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            c.execute("ALTER TABLE containers ADD COLUMN mem TEXT")
         except sqlite3.OperationalError:
             pass
 
@@ -180,11 +190,12 @@ def save_results(hosts: list[dict]) -> None:
                 c.execute(
                     """
                     INSERT OR REPLACE INTO containers
-                        (ip, name, image, state, status, ports, last_seen)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                        (ip, name, image, state, status, ports, last_seen, cpu, mem)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (h["ip"], ct["name"], ct.get("image"), ct.get("state"),
-                     ct.get("status"), json.dumps(ct.get("ports", [])), now),
+                     ct.get("status"), json.dumps(ct.get("ports", [])), now,
+                     ct.get("cpu", ""), ct.get("mem", "")),
                 )
 
 
@@ -227,11 +238,12 @@ def save_single_docker_host(ip: str, port: int, containers: list[dict]) -> None:
             c.execute(
                 """
                 INSERT OR REPLACE INTO containers
-                    (ip, name, image, state, status, ports, last_seen)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                    (ip, name, image, state, status, ports, last_seen, cpu, mem)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (ip, ct["name"], ct.get("image"), ct.get("state"),
-                 ct.get("status"), json.dumps(ct.get("ports", [])), now),
+                 ct.get("status"), json.dumps(ct.get("ports", [])), now,
+                 ct.get("cpu", ""), ct.get("mem", "")),
             )
             
 

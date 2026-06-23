@@ -502,10 +502,22 @@ function containerRow(ip, ct){
   const internal=(ct.ports||[]).filter(p=>!p.public)
     .map(p=>`<span class="cport int" title="未发布到宿主机">${p.private}</span>`).join("");
   const stopped=ct.state && ct.state!=="running";
+  
+  let stats = "";
+  if (!stopped) {
+    const parts = [];
+    if (ct.cpu) parts.push(`CPU: ${ct.cpu}`);
+    if (ct.mem) parts.push(`Mem: ${ct.mem}`);
+    if (ct.status) parts.push(ct.status.replace("Up ", ""));
+    stats = parts.join(" · ");
+  } else {
+    stats = `已停止 (${ct.state || "exited"})`;
+  }
+  
   return `<div class="ct ${stopped?"stopped":""}">
     <span class="ct-name">🐳 ${esc(ct.name)}</span>
     <div class="ct-ports">${links||internal||`<span class="cport int">—</span>`}</div>
-    <span class="ct-img" title="${esc(ct.status||"")}">${esc(ct.image||"")}</span>
+    <span class="ct-img" style="margin-top:2px">${esc(ct.image||"")} ${stats ? `· ${esc(stats)}` : ""}</span>
   </div>`;
 }
 
@@ -514,10 +526,10 @@ function containerRow(ip, ct){
 function navView(hosts, showHidden){
   const renames=STATE.settings.renames||{}, hiddenSet=new Set(STATE.settings.hidden||[]);
   const dockerPub=new Set(), items=[];
-  const pushItem=(cat,key,name,url,host,ip,port,hidden,isDocker)=>{
+  const pushItem=(cat,key,name,url,host,ip,port,hidden,isDocker,container)=>{
     if(activeCat && cat.id!==activeCat) return;
     if(hidden && !showHidden) return;
-    items.push({cat,key,name,url,host,ip,port,hidden,isDocker});
+    items.push({cat,key,name,url,host,ip,port,hidden,isDocker,container});
   };
   for(const h of hosts){ if(!h.is_up) continue;
     for(const ct of (h.containers||[])){
@@ -527,7 +539,7 @@ function navView(hosts, showHidden){
         const cat=catForSvc(h.ip,{port:p.public,name:""});
         const hid=hiddenSet.has(key) || cat.visible===false;
         const scheme=HTTPS_PORTS.has(p.public)?"https":"http";
-        pushItem(cat,key,renames[key]||ct.name,`${scheme}://${h.ip}:${p.public}`,h,h.ip,p.public,hid,true);
+        pushItem(cat,key,renames[key]||ct.name,`${scheme}://${h.ip}:${p.public}`,h,h.ip,p.public,hid,true,ct);
       }
     }
     for(const s of (h.services||[])){
@@ -552,6 +564,21 @@ function appCard(it){
   const who=(it.host.label||it.host.hostname||"")+(it.host.label||it.host.hostname?" · ":"")+it.ip;
   const stop="event.preventDefault();event.stopPropagation();";
   const del = !it.isDocker ? `<button class="del" title="删除服务" onclick="${stop}deleteSvc('${it.ip}',${it.port})">✕</button>` : "";
+  
+  let dockerStats = "";
+  if (it.isDocker && it.container) {
+    const ct = it.container;
+    const stopped = ct.state && ct.state !== "running";
+    if (!stopped) {
+      const parts = [];
+      if (ct.cpu) parts.push(`CPU ${ct.cpu}`);
+      if (ct.mem) parts.push(`Mem ${ct.mem}`);
+      dockerStats = parts.join(" · ");
+    } else {
+      dockerStats = `已停止 (${ct.state || "exited"})`;
+    }
+  }
+  
   return `<a class="app ${it.hidden?"hidden":""}" href="${it.url}" target="_blank" rel="noopener"
       style="border-left-color:${it.cat.color}">
     <div class="acts">
@@ -561,7 +588,7 @@ function appCard(it){
       ${del}
     </div>
     <div class="an">${esc(it.name)}</div>
-    <div class="au">${esc(it.url)}</div>
+    <div class="au">${esc(it.url)} ${dockerStats ? `<span style="font-size:11px;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums">${esc(dockerStats)}</span>` : ""}</div>
     <div class="ah">${esc(who)}</div>
   </a>`;
 }
