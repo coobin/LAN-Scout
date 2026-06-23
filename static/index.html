@@ -40,6 +40,15 @@
   .seg button { background: var(--panel-2); border: 0; color: var(--muted); padding: 8px 14px; }
   .seg button.on { background: var(--accent); color: #fff; }
   .toggle { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13.5px; }
+  .catfilter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .catchip { display: inline-flex; align-items: center; gap: 7px; background: var(--panel);
+    border: 1px solid var(--line); color: var(--text); padding: 6px 12px; border-radius: 999px; font-size: 13px; }
+  .catchip .sw { width: 9px; height: 9px; border-radius: 3px; }
+  .catchip:hover { border-color: var(--accent); }
+  .catchip.on { border-color: var(--cc, var(--accent)); background: color-mix(in srgb, var(--cc, var(--accent)) 18%, var(--panel)); }
+  .catchip .cnt { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pencil { background: none; border: 0; color: var(--muted); padding: 0 0 0 2px; font-size: 12px; opacity: .55; }
+  .pencil:hover { opacity: 1; color: var(--text); }
   .stats { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
   .stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
     padding: 13px 18px; min-width: 110px; }
@@ -147,6 +156,7 @@
     </label>
     <label class="toggle"><input type="checkbox" id="showHidden" onchange="render()"> 显示已隐藏的服务</label>
   </div>
+  <div class="catfilter" id="catFilter"></div>
   <div id="content"></div>
   <div class="empty" id="empty" style="display:none">还没有数据。点击「立即扫描」开始探测局域网。</div>
 </main>
@@ -188,6 +198,7 @@
 <script>
 let STATE = { hosts: [], settings: null, scanning: false };
 let EDIT_CATS = [];
+let activeCat = null;   // selected category id for the top filter bar
 let pollTimer = null;
 const UNCAT = { id: "_other", name: "未分类", color: "#6b7280", order: 9999, visible: true };
 
@@ -221,6 +232,11 @@ function isHidden(ip, s){
   if (cat.visible === false) return true;
   return (STATE.settings.hidden||[]).includes(ip+":"+s.port);
 }
+function svcKey(ip, s){ return ip+":"+s.port; }
+// Display name: user rename wins, else identified product, else nmap name.
+function svcName(ip, s){
+  return (STATE.settings.renames||{})[svcKey(ip,s)] || s.product || s.name || "service";
+}
 
 async function load(){
   try { STATE = await (await fetch("/api/state")).json(); render(); } catch(e){}
@@ -237,6 +253,33 @@ function setSort(v){ saveSettings({host_sort:v}); }
 async function toggleHidden(ip, port){
   const key=ip+":"+port, h=new Set(STATE.settings.hidden||[]);
   h.has(key)?h.delete(key):h.add(key); saveSettings({hidden:[...h]});
+}
+function setCatFilter(id){ activeCat = (activeCat===id) ? null : id; render(); }
+async function renameSvc(ip, port){
+  const key=ip+":"+port, cur=(STATE.settings.renames||{})[key]||"";
+  const name=prompt("服务自定义名称（留空清除）：", cur);
+  if (name===null) return;            // cancelled
+  const r={...(STATE.settings.renames||{})};
+  if (name.trim()) r[key]=name.trim(); else delete r[key];
+  saveSettings({renames:r});
+}
+function renderCatFilter(){
+  // Only show categories that have at least one (visible) service present.
+  const counts={};
+  for(const h of STATE.hosts){ if(!h.is_up) continue;
+    for(const s of (h.services||[])){
+      if(isHidden(h.ip,s) && !document.getElementById("showHidden").checked) continue;
+      const c=catFor(s); counts[c.id]=(counts[c.id]||0)+1;
+    }
+  }
+  const cats=[...sortedCats(),UNCAT].filter(c=>counts[c.id]);
+  const total=Object.values(counts).reduce((a,b)=>a+b,0);
+  const chips=cats.map(c=>`<button class="catchip ${activeCat===c.id?"on":""}" style="--cc:${c.color}"
+      onclick="setCatFilter('${c.id}')"><span class="sw" style="background:${c.color}"></span>${esc(c.name)}
+      <span class="cnt">${counts[c.id]}</span></button>`).join("");
+  document.getElementById("catFilter").innerHTML = (cats.length>1)
+    ? `<button class="catchip ${!activeCat?"on":""}" onclick="setCatFilter(null)">全部 <span class="cnt">${total}</span></button>`+chips
+    : "";
 }
 async function saveLabel(ip, label){
   await fetch("/api/host/"+ip, {method:"POST", headers:{"Content-Type":"application/json"},
@@ -276,6 +319,7 @@ function render(){
     ${ctCount?`<div class="stat"><div class="n">${ctCount}</div><div class="l">🐳 容器</div></div>`:""}
     <div class="stat"><div class="n">${STATE.hosts.length}</div><div class="l">已知设备</div></div>`;
 
+  renderCatFilter();
   const q=document.getElementById("search").value.trim().toLowerCase();
   const hosts=STATE.hosts.filter(h=>!q||hostMatches(h,q));
   document.getElementById("empty").style.display=hosts.length?"none":"block";
@@ -283,9 +327,13 @@ function render(){
     st.view==="category" ? categoryView(hosts, showHidden) : hostView(hosts, showHidden);
 }
 
+// Whether a service passes the active category filter (null = 全部).
+function catPass(s){ return !activeCat || catFor(s).id===activeCat; }
+
 function hostMatches(h,q){
   return [h.ip,h.hostname,h.label,h.note,h.vendor,
-    ...(h.services||[]).flatMap(s=>[s.name,s.product,String(s.port)])]
+    ...(h.services||[]).flatMap(s=>[s.name,s.product,svcName(h.ip,s),String(s.port)]),
+    ...(h.containers||[]).flatMap(c=>[c.name,c.image])]
     .filter(Boolean).join(" ").toLowerCase().includes(q);
 }
 
@@ -308,21 +356,23 @@ function sortHosts(hosts){
 function svcChip(ip, s, showHidden){
   const hidden=isHidden(ip,s);
   if(hidden && !showHidden) return "";
+  if(!catPass(s)) return "";                 // filtered out by the top category bar
   const cat=catFor(s), url=svcUrl(ip,s);
   const desc=[s.product,s.version].filter(Boolean).join(" ");
-  // Prefer the identified product (e.g. "nginx"); fall back to the nmap
-  // service name (e.g. "http"). Show the version dimmed when known.
-  const main=s.product||s.name;
+  // Custom rename wins, else identified product, else nmap service name.
+  const main=svcName(ip,s);
   const inner=`<span class="port">${s.port}</span>`+
     (main?`<span class="name">${esc(main)}</span>`:"")+
     (s.version?`<span class="ver">${esc(s.version)}</span>`:"")+
     (url?`<span class="arrow">↗</span>`:"");
-  const eye=`<button class="eye" title="${hidden?"显示":"隐藏"}" onclick="event.preventDefault();event.stopPropagation();toggleHidden('${ip}',${s.port})">${hidden?"🚫":"👁"}</button>`;
+  const stop="event.preventDefault();event.stopPropagation();";
+  const pen=`<button class="pencil" title="重命名" onclick="${stop}renameSvc('${ip}',${s.port})">✎</button>`;
+  const eye=`<button class="eye" title="${hidden?"显示":"隐藏"}" onclick="${stop}toggleHidden('${ip}',${s.port})">${hidden?"🚫":"👁"}</button>`;
   const style=`style="border-left-color:${cat.color}"`, title=desc?`title="${esc(desc)}"`:"";
   const cls=`svc${url?" link":""}${hidden?" hidden":""}`;
   return url
-    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${eye}</span>`
-    : `<span class="${cls}" ${style} ${title}>${inner}${eye}</span>`;
+    ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${title} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${pen}${eye}</span>`
+    : `<span class="${cls}" ${style} ${title}>${inner}${pen}${eye}</span>`;
 }
 
 function containerRow(ip, ct){
@@ -347,7 +397,10 @@ function hostView(hosts, showHidden){
     const svcs=(h.services||[]).slice()
       .sort((a,b)=> (catFor(a).order-catFor(b).order) || (a.port-b.port))
       .map(s=>svcChip(h.ip,s,showHidden)).join("");
-    const cts=h.containers||[];
+    // When a category filter is active, only show hosts with matching services,
+    // and drop the (uncategorised) docker block to keep the filter meaningful.
+    if(activeCat && !svcs) return "";
+    const cts=activeCat ? [] : (h.containers||[]);
     const sub=[h.hostname,h.mac].filter(Boolean).map(esc).join(" · ");
     return `<div class="card ${h.is_up?"":"down"}">
       <div class="top"><span class="dot"></span>
@@ -372,6 +425,7 @@ function categoryView(hosts, showHidden){
   for(const h of hosts){ if(!h.is_up) continue;
     for(const s of (h.services||[])){
       if(isHidden(h.ip,s) && !showHidden) continue;
+      if(!catPass(s)) continue;           // top category filter
       const cat=catFor(s);
       if(!buckets.has(cat.id)) buckets.set(cat.id,{cat,items:[]});
       buckets.get(cat.id).items.push({h,s});
@@ -382,7 +436,7 @@ function categoryView(hosts, showHidden){
     const b=buckets.get(c.id);
     const cards=b.items.sort((a,b)=>a.s.port-b.s.port).map(({h,s})=>{
       const url=svcUrl(h.ip,s), who=(h.label||h.hostname||"")+(h.label||h.hostname?" · ":"")+h.ip;
-      const main=s.product||s.name||"service";
+      const main=svcName(h.ip,s);
       const ver=[s.product?s.name:null, s.version].filter(Boolean).join(" · ");
       const inner=`<div class="h"><span class="nm">${esc(main)}</span><span class="pt">${h.ip}:${s.port}</span></div>
         ${ver?`<div class="who" style="color:var(--accent-2)">${esc(ver)}</div>`:""}
