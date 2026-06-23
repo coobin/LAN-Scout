@@ -7,6 +7,7 @@ Two kinds of data live here:
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 import threading
 import time
@@ -69,6 +70,17 @@ def init() -> None:
             CREATE TABLE IF NOT EXISTS settings (
                 key   TEXT PRIMARY KEY,
                 value TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS containers (
+                ip        TEXT NOT NULL,
+                name      TEXT NOT NULL,
+                image     TEXT,
+                state     TEXT,
+                status    TEXT,
+                ports     TEXT,              -- JSON: [{public,private,type}]
+                last_seen REAL NOT NULL,
+                PRIMARY KEY (ip, name)
             );
             """
         )
@@ -150,6 +162,25 @@ def save_results(hosts: list[dict]) -> None:
                     (h["ip"], s["port"], s.get("protocol", "tcp"),
                      s.get("name"), s.get("product"), s.get("version"), now),
                 )
+        # Refresh docker containers for scanned hosts (only those probed carry
+        # a "containers" key; a host without the key keeps its old rows).
+        probed = [h["ip"] for h in hosts if "containers" in h]
+        if probed:
+            placeholders = ",".join("?" * len(probed))
+            c.execute(
+                f"DELETE FROM containers WHERE ip IN ({placeholders})", probed
+            )
+        for h in hosts:
+            for ct in h.get("containers", []):
+                c.execute(
+                    """
+                    INSERT OR REPLACE INTO containers
+                        (ip, name, image, state, status, ports, last_seen)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (h["ip"], ct["name"], ct.get("image"), ct.get("state"),
+                     ct.get("status"), json.dumps(ct.get("ports", [])), now),
+                )
 
 
 def update_host_meta(ip: str, label: str | None, note: str | None) -> bool:
@@ -165,11 +196,21 @@ def get_hosts() -> list[dict]:
         rows = c.execute("SELECT * FROM hosts").fetchall()
         hosts = [dict(r) for r in rows]
         svc = c.execute("SELECT * FROM services ORDER BY port").fetchall()
+        cts = c.execute("SELECT * FROM containers ORDER BY name").fetchall()
     by_ip: dict[str, list] = {}
     for s in svc:
         by_ip.setdefault(s["ip"], []).append(dict(s))
+    ct_by_ip: dict[str, list] = {}
+    for ct in cts:
+        d = dict(ct)
+        try:
+            d["ports"] = json.loads(d["ports"]) if d.get("ports") else []
+        except (json.JSONDecodeError, TypeError):
+            d["ports"] = []
+        ct_by_ip.setdefault(ct["ip"], []).append(d)
     for h in hosts:
         h["services"] = by_ip.get(h["ip"], [])
+        h["containers"] = ct_by_ip.get(h["ip"], [])
     # Sort hosts by numeric IP for a tidy list.
     hosts.sort(key=lambda h: (0 if h["is_up"] else 1, _ip_key(h["ip"])))
     return hosts

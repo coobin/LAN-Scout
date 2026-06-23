@@ -71,6 +71,19 @@
   .eye { background: none; border: 0; color: var(--muted); padding: 0 0 0 3px; font-size: 13px; opacity: .6; }
   .eye:hover { opacity: 1; color: var(--text); }
   .no-svc { color: var(--muted); font-size: 12.5px; }
+  .containers { border-top: 1px dashed var(--line); padding-top: 10px; }
+  .ct-head { font-size: 12px; color: var(--muted); margin-bottom: 7px; }
+  .ct-list { display: flex; flex-direction: column; gap: 5px; max-height: 280px; overflow: auto; }
+  .ct { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline;
+    padding: 5px 8px; background: var(--panel-2); border-radius: 8px; border-left: 3px solid #2496ed; }
+  .ct-name { font-weight: 600; font-size: 13px; word-break: break-all; }
+  .ct.stopped { opacity: .5; border-left-color: var(--down); }
+  .ct-img { color: var(--muted); font-size: 11px; grid-column: 1; word-break: break-all; }
+  .ct-ports { grid-row: 1 / span 2; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+  .cport { font-size: 12px; text-decoration: none; background: #16263a; border: 1px solid #2e4a6b;
+    border-radius: 6px; padding: 2px 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cport:hover { border-color: var(--accent); }
+  .cport.int { background: var(--bg); border-color: var(--line); color: var(--muted); }
   .empty { text-align: center; color: var(--muted); padding: 80px 20px; }
   .banner { background: #3a1d1d; border: 1px solid var(--danger); color: #fca5a5;
     padding: 12px 16px; border-radius: 10px; margin-bottom: 18px; }
@@ -157,7 +170,8 @@
         <input type="number" id="f_timing" min="0" max="5"></div>
       <div class="field"><label>&nbsp;</label>
         <label class="toggle" style="margin-bottom:8px"><input type="checkbox" id="f_sv"> 服务/版本探测 (-sV)</label>
-        <label class="toggle"><input type="checkbox" id="f_pn"> 跳过主机发现 (-Pn) — 扫指定 IP / 不回 ping 的主机时开启</label></div>
+        <label class="toggle" style="margin-bottom:8px"><input type="checkbox" id="f_pn"> 跳过主机发现 (-Pn) — 扫指定 IP / 不回 ping 的主机时开启</label>
+        <label class="toggle"><input type="checkbox" id="f_docker"> 🐳 Docker 探测 — 对开放 2375 的主机直接列出全部容器</label></div>
     </div>
     <details open>
       <summary>服务分类（排序 / 颜色 / 显示）</summary>
@@ -237,6 +251,7 @@ function render(){
   const showHidden = document.getElementById("showHidden").checked;
   const upCount = STATE.hosts.filter(h=>h.is_up).length;
   const svcCount = STATE.hosts.reduce((a,h)=>a+(h.services||[]).length,0);
+  const ctCount = STATE.hosts.reduce((a,h)=>a+(h.containers||[]).length,0);
 
   document.getElementById("meta").innerHTML =
     `目标 <b>${esc(st.targets)}</b> · 上次扫描 <b>${fmtTime(ls?.finished_at)}</b>` +
@@ -258,6 +273,7 @@ function render(){
   document.getElementById("stats").innerHTML=`
     <div class="stat"><div class="n">${upCount}</div><div class="l">在线主机</div></div>
     <div class="stat"><div class="n">${svcCount}</div><div class="l">开放服务</div></div>
+    ${ctCount?`<div class="stat"><div class="n">${ctCount}</div><div class="l">🐳 容器</div></div>`:""}
     <div class="stat"><div class="n">${STATE.hosts.length}</div><div class="l">已知设备</div></div>`;
 
   const q=document.getElementById("search").value.trim().toLowerCase();
@@ -309,11 +325,29 @@ function svcChip(ip, s, showHidden){
     : `<span class="${cls}" ${style} ${title}>${inner}${eye}</span>`;
 }
 
+function containerRow(ip, ct){
+  const pub=(ct.ports||[]).filter(p=>p.public);
+  const links=pub.map(p=>{
+    const scheme=HTTPS_PORTS.has(p.public)?"https":"http";
+    return `<a class="cport" href="${scheme}://${ip}:${p.public}" target="_blank" rel="noopener"
+      title="${p.public}→${p.private||"?"}/${p.type||"tcp"}">${p.public}<span style="opacity:.5">↗</span></a>`;
+  }).join("");
+  const internal=(ct.ports||[]).filter(p=>!p.public)
+    .map(p=>`<span class="cport int" title="未发布到宿主机">${p.private}</span>`).join("");
+  const stopped=ct.state && ct.state!=="running";
+  return `<div class="ct ${stopped?"stopped":""}">
+    <span class="ct-name">🐳 ${esc(ct.name)}</span>
+    <div class="ct-ports">${links||internal||`<span class="cport int">—</span>`}</div>
+    <span class="ct-img" title="${esc(ct.status||"")}">${esc(ct.image||"")}</span>
+  </div>`;
+}
+
 function hostView(hosts, showHidden){
   return `<div class="grid">${sortHosts(hosts).map(h=>{
     const svcs=(h.services||[]).slice()
       .sort((a,b)=> (catFor(a).order-catFor(b).order) || (a.port-b.port))
       .map(s=>svcChip(h.ip,s,showHidden)).join("");
+    const cts=h.containers||[];
     const sub=[h.hostname,h.mac].filter(Boolean).map(esc).join(" · ");
     return `<div class="card ${h.is_up?"":"down"}">
       <div class="top"><span class="dot"></span>
@@ -325,6 +359,8 @@ function hostView(hosts, showHidden){
           ${h.vendor?`<div class="vendor">${esc(h.vendor)}</div>`:""}
         </div></div>
       ${svcs?`<div class="services">${svcs}</div>`:`<div class="no-svc">${h.is_up?"无开放端口":"离线"}</div>`}
+      ${cts.length?`<div class="containers"><div class="ct-head">🐳 Docker · ${cts.length} 个容器</div>
+        <div class="ct-list">${cts.map(ct=>containerRow(h.ip,ct)).join("")}</div></div>`:""}
     </div>`;
   }).join("")}</div>`;
 }
@@ -373,6 +409,7 @@ function openSettings(){
   document.getElementById("f_timing").value=s.timing;
   document.getElementById("f_sv").checked=s.service_detection;
   document.getElementById("f_pn").checked=s.skip_discovery;
+  document.getElementById("f_docker").checked=s.docker_probe;
   EDIT_CATS=JSON.parse(JSON.stringify(s.categories||[]));
   renderCatEditor();
   document.getElementById("overlay").classList.add("show");
@@ -409,6 +446,7 @@ function saveSettingsForm(){
     timing:document.getElementById("f_timing").value,
     service_detection:document.getElementById("f_sv").checked,
     skip_discovery:document.getElementById("f_pn").checked,
+    docker_probe:document.getElementById("f_docker").checked,
     categories:EDIT_CATS,
   });
   closeSettings();

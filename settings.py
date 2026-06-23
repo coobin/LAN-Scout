@@ -24,7 +24,8 @@ _PORTS_RE = re.compile(r"^[0-9,\-]+$")
 # Keys we accept from clients, with their type validators applied in update().
 _ALLOWED = {
     "targets", "full_targets", "ports", "interval", "service_detection",
-    "timing", "skip_discovery", "view", "host_sort", "categories", "hidden",
+    "timing", "skip_discovery", "docker_probe", "view", "host_sort",
+    "categories", "hidden",
 }
 
 
@@ -42,6 +43,8 @@ def defaults() -> dict:
         # doesn't answer ping. Essential when scanning specific IPs you know are
         # up, or hosts/subnets that block ping.
         "skip_discovery": config.SKIP_DISCOVERY,
+        # Query the Docker API on hosts exposing 2375 to list their containers.
+        "docker_probe": config.DOCKER_PROBE,
         "view": "host",          # "host" | "category"
         "host_sort": "ip",       # ip | label | services | last_seen
         "categories": [dict(c) for c in config.DEFAULT_CATEGORIES],
@@ -96,7 +99,7 @@ def _validate(key: str, value, previous):
     if key == "timing":
         s = str(value)
         return s if s in {"0", "1", "2", "3", "4", "5"} else previous
-    if key in ("service_detection", "skip_discovery"):
+    if key in ("service_detection", "skip_discovery", "docker_probe"):
         return bool(value)
     if key == "view":
         return value if value in {"host", "category"} else previous

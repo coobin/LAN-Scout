@@ -16,6 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import config
 import db
+import docker_probe
 import scanner
 import settings as settings_mod
 
@@ -47,6 +48,18 @@ def run_scan() -> None:
                                  s["timing"], skip_discovery=True)
             hosts = _merge_hosts(hosts, extra)
             print(f"[scan] full pass {full}: +{len(extra)} host(s)")
+        # Docker enrichment: any host exposing the Docker API gets its full
+        # container list — far more complete than port-scanning a docker host.
+        if s.get("docker_probe", True):
+            n = 0
+            for h in hosts:
+                open_ports = {sv["port"] for sv in h.get("services", [])}
+                if open_ports & set(docker_probe.DOCKER_PORTS):
+                    h["containers"] = docker_probe.containers_for(
+                        h["ip"], open_ports)
+                    n += len(h["containers"])
+            if n:
+                print(f"[scan] docker: {n} container(s) across hosts")
         db.save_results(hosts)
         db.finish_scan(scan_id, len(hosts))
         print(f"[scan] {targets}: {len(hosts)} host(s) up")

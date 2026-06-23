@@ -79,6 +79,10 @@ SKIP_DISCOVERY = os.environ.get("LANSCOUT_PN", "0") != "0"
 # a fast subnet sweep misses (e.g. the host running LAN Scout itself).
 FULL_TARGETS = os.environ.get("LANSCOUT_FULL_TARGETS", "")
 
+# Probe the Docker Engine API (TCP 2375) on hosts that expose it, to list
+# running containers — far more accurate than port-scanning a docker host.
+DOCKER_PROBE = os.environ.get("LANSCOUT_DOCKER", "1") != "0"
+
 # HTTP server bind.
 HOST = os.environ.get("LANSCOUT_HOST", "127.0.0.1")
 PORT = int(os.environ.get("LANSCOUT_PORT", "8770"))
