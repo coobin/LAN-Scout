@@ -41,7 +41,8 @@ def _fetch_stats(base: str, c_id: str, timeout: float) -> dict | None:
     try:
         with urllib.request.urlopen(f"{base}/containers/{c_id}/stats?stream=false", timeout=timeout) as r:
             return json.load(r)
-    except Exception:
+    except Exception as e:
+        print(f"[docker] stats failed {base} {c_id[:12]}: {e}")
         return None
 
 
@@ -55,7 +56,7 @@ def _query(base: str, timeout: float) -> list[dict]:
     if running:
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {
-                executor.submit(_fetch_stats, base, c["Id"], min(timeout, 2.0)): c["Id"]
+                executor.submit(_fetch_stats, base, c["Id"], min(timeout + 3.0, 8.0)): c["Id"]
                 for c in running
             }
             for f in futures:

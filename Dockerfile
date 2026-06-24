@@ -18,7 +18,8 @@ COPY . /app
 # settings/history survive restarts.
 ENV LANSCOUT_HOST=0.0.0.0 \
     LANSCOUT_PORT=8770 \
-    LANSCOUT_DB=/data/lanscout.db
+    LANSCOUT_DB=/data/lanscout.db \
+    PYTHONUNBUFFERED=1
 
 VOLUME ["/data"]
 EXPOSE 8770
