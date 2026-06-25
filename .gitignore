@@ -7,8 +7,5 @@ data/
 __pycache__/
 *.pyc
 
-# AI assistant orientation doc — local only, intentionally untracked
-AGENTS.md
-
 # editor / tooling
 .claude/
