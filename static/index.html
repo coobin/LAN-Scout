@@ -10,6 +10,7 @@
     const style = localStorage.getItem('ui_style') || 'cyberpunk';
     const mode = localStorage.getItem('ui_mode') || 'auto';
     if (style === 'minimal') root.classList.add('theme-minimal');
+    else if (style === 'bento') root.classList.add('theme-bento');
     if (mode === 'dark') root.classList.add('dark-theme');
     else if (mode === 'light') root.classList.add('light-theme');
   })();
@@ -38,7 +39,7 @@
 
   /* Cyberpunk Light */
   @media (prefers-color-scheme: light) {
-    :root:not(.dark-theme):not(.theme-minimal) {
+    :root:not(.dark-theme):not(.theme-minimal):not(.theme-bento) {
       --bg: #f0f2ec; --panel: rgba(0,140,80,.03); --panel-2: rgba(0,140,80,.05); --line: rgba(0,140,80,.12);
       --text: #1a2018; --muted: #7a8a70; --accent: #00a855; --accent-2: #0090b8;
       --up: #00a855; --down: #c8d0c0; --danger: #d03020;
@@ -53,7 +54,7 @@
       --tab-on-bg: rgba(0,168,85,.08); --btn-primary-bg: rgba(0,168,85,.08); --btn-primary-border: rgba(0,168,85,.3);
     }
   }
-  :root.light-theme:not(.theme-minimal) {
+  :root.light-theme:not(.theme-minimal):not(.theme-bento) {
     --bg: #f0f2ec; --panel: rgba(0,140,80,.03); --panel-2: rgba(0,140,80,.05); --line: rgba(0,140,80,.12);
     --text: #1a2018; --muted: #7a8a70; --accent: #00a855; --accent-2: #0090b8;
     --up: #00a855; --down: #c8d0c0; --danger: #d03020;
@@ -112,6 +113,53 @@
     --header-bg: rgba(7,8,14,.80);
     --glow: rgba(124,128,240,.10);
     --modal-bg: #0a0b12;
+  }
+
+  /* ══════ Bento Light (default for bento) ══════ */
+  :root.theme-bento {
+    --bg: #f5f0eb; --panel: #ffffff; --panel-2: #efe8e0; --line: #e0d5c8;
+    --text: #2c1e10; --muted: #9a8878; --accent: #e06030; --accent-2: #c04820;
+    --up: #2d9a5a; --down: #b8b0a8; --danger: #d03838; --radius: 16px;
+    --banner-bg: #fef0f0; --banner-text: #c02020;
+    --svc-hover: rgba(224,96,48,.06);
+    --ct-border: #e06030;
+    --cport-bg: rgba(224,96,48,.06); --cport-border: rgba(224,96,48,.18);
+    --header-bg: rgba(245,240,235,.90);
+    --glow: rgba(224,96,48,.10);
+    --scan: rgba(224,96,48,.8);
+    --modal-bg: #f5f0eb;
+    --font: "Inter", -apple-system, "Segoe UI", Roboto, "PingFang SC", "Noto Sans SC", sans-serif;
+    --tab-on-bg: var(--accent); --tab-on-color: #fff; --tab-on-shadow: 0 2px 8px rgba(224,96,48,.20);
+    --btn-primary-bg: var(--accent); --btn-primary-color: #fff; --btn-primary-border: var(--accent);
+    --bento-gap: 12px;
+  }
+
+  /* Bento Dark */
+  @media (prefers-color-scheme: dark) {
+    :root.theme-bento:not(.light-theme) {
+      --bg: #1a1410; --panel: rgba(255,255,255,.04); --panel-2: rgba(255,200,160,.05); --line: rgba(255,200,160,.08);
+      --text: #e8ddd0; --muted: #7a6a58; --accent: #ff7840; --accent-2: #ff6028;
+      --up: #40c878; --down: #504840; --danger: #ff5050;
+      --banner-bg: rgba(208,56,56,.08); --banner-text: #ff8080;
+      --svc-hover: rgba(255,120,64,.06);
+      --ct-border: #ff7840;
+      --cport-bg: rgba(255,120,64,.06); --cport-border: rgba(255,120,64,.18);
+      --header-bg: rgba(26,20,16,.90);
+      --glow: rgba(255,120,64,.12);
+      --modal-bg: #1e1812;
+    }
+  }
+  :root.theme-bento.dark-theme {
+    --bg: #1a1410; --panel: rgba(255,255,255,.04); --panel-2: rgba(255,200,160,.05); --line: rgba(255,200,160,.08);
+    --text: #e8ddd0; --muted: #7a6a58; --accent: #ff7840; --accent-2: #ff6028;
+    --up: #40c878; --down: #504840; --danger: #ff5050;
+    --banner-bg: rgba(208,56,56,.08); --banner-text: #ff8080;
+    --svc-hover: rgba(255,120,64,.06);
+    --ct-border: #ff7840;
+    --cport-bg: rgba(255,120,64,.06); --cport-border: rgba(255,120,64,.18);
+    --header-bg: rgba(26,20,16,.90);
+    --glow: rgba(255,120,64,.12);
+    --modal-bg: #1e1812;
   }
 
   /* ══════ Base layout (cyberpunk defaults) ══════ */
@@ -406,6 +454,127 @@
   .theme-minimal .svc-card { border-left-width: 3px; border-radius: 10px; padding: 10px 12px; }
   .theme-minimal .svc-card .who { font-size: 11.5px; }
 
+  /* ══════ Bento theme structural overrides ══════ */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  .theme-bento body { font: 13.5px/1.6 var(--font); }
+  .theme-bento a { color: inherit; }
+  .theme-bento header { padding: 0 28px; height: 56px; gap: 16px;
+    backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    border-bottom: none; box-shadow: 0 1px 0 var(--line); }
+  .theme-bento .brand { gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -.3px; color: var(--text); }
+  .theme-bento .logo { width: 28px; height: 28px; border-radius: 8px;
+    background: linear-gradient(135deg, #e06030, #ff9060); box-shadow: 0 2px 8px rgba(224,96,48,.25); animation: none; }
+  .theme-bento .meta { font-size: 11px; font-family: var(--mono); }
+  .theme-bento .search { background: var(--panel); padding: 8px 14px; border-radius: 12px; width: 220px; font-size: 13px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+  .theme-bento .search:focus { box-shadow: 0 0 0 3px var(--glow), 0 1px 3px rgba(0,0,0,.04); }
+  .theme-bento .hbtn { padding: 6px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 500; }
+  .theme-bento .hbtn:hover { color: var(--text); background: var(--panel); border-color: var(--line);
+    box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .theme-bento .hbtn.accent { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 600;
+    box-shadow: 0 2px 8px rgba(224,96,48,.20); }
+  .theme-bento .hbtn.accent:hover { background: var(--accent-2); box-shadow: 0 2px 12px rgba(224,96,48,.30); }
+  .theme-bento main { padding: 20px 28px 60px; }
+  .theme-bento .topbar { margin-bottom: 16px; }
+  .theme-bento .tabs { gap: 2px; background: var(--panel); border: 0; border-radius: 12px; padding: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .theme-bento .tabs button { border: 0; padding: 6px 18px; border-radius: 9px; font-size: 13px; font-weight: 500; }
+  .theme-bento .tabs button.on { box-shadow: 0 2px 6px rgba(224,96,48,.18); }
+  .theme-bento .toggle { font-size: 12.5px; }
+  .theme-bento select.ctl { background: var(--panel); padding: 6px 10px; border-radius: 10px; font-size: 12.5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+  .theme-bento .stats { gap: 12px; margin-bottom: 16px; padding-bottom: 0; border-bottom: none; }
+  .theme-bento .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 10px 18px; gap: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+  .theme-bento .stat .n { font-family: var(--mono); font-size: 26px; color: var(--accent); text-shadow: none; }
+  .theme-bento .stat .l { font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; }
+  .theme-bento .catfilter { gap: 6px; margin-bottom: 16px; }
+  .theme-bento .catchip { gap: 5px; padding: 5px 14px; border-radius: 10px; font-size: 12px; font-weight: 500;
+    background: var(--panel); box-shadow: 0 1px 2px rgba(0,0,0,.04); border-color: transparent; }
+  .theme-bento .catchip .sw { width: 8px; height: 8px; border-radius: 50%; }
+  .theme-bento .catchip:hover { border-color: var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+  .theme-bento .catchip.on { border-color: var(--accent); background: var(--svc-hover);
+    box-shadow: 0 2px 8px rgba(224,96,48,.10); }
+  .theme-bento .pencil, .theme-bento .del, .theme-bento .ext, .theme-bento .eye { font-size: 12px; opacity: .4; }
+  .theme-bento .catpick { background: var(--panel-2); border-radius: 8px; font-size: 10.5px; max-width: 90px; }
+  .theme-bento .apps { gap: var(--bento-gap); grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .theme-bento .app { gap: 6px; padding: 16px 18px; border-radius: 16px; border-color: transparent;
+    background: var(--panel); box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+  .theme-bento .app::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px;
+    border-radius: 0 4px 4px 0; background: var(--ac, var(--accent)); opacity: .4; transition: opacity .18s; }
+  .theme-bento .app:hover { border-color: transparent; box-shadow: 0 4px 20px rgba(0,0,0,.08), 0 0 0 1px var(--accent); }
+  .theme-bento .app:hover::before { opacity: 1; }
+  .theme-bento .app .an { font-size: 14px; font-weight: 600; }
+  .theme-bento .app .acts { top: 8px; right: 10px; }
+  .theme-bento .cat-section { margin-bottom: 24px; }
+  .theme-bento .cat-head { gap: 8px; margin-bottom: 12px; }
+  .theme-bento .cat-head .swatch { width: 4px; height: 18px; border-radius: 3px; }
+  .theme-bento .cat-head h2 { font-size: 13px; letter-spacing: .5px; font-weight: 700; }
+  .theme-bento .cat-head .count { font-family: var(--mono); font-size: 11px; background: var(--panel-2);
+    padding: 1px 7px; border-radius: 8px; }
+  .theme-bento .grid { gap: var(--bento-gap); }
+  .theme-bento .card { padding: 18px 20px; gap: 10px; border-radius: 16px; border-color: transparent;
+    background: var(--panel); box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+  .theme-bento .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08), 0 0 0 1px var(--accent); }
+  .theme-bento .dot { width: 8px; height: 8px; margin-top: 7px; box-shadow: 0 0 8px rgba(45,154,90,.4); }
+  .theme-bento .ip { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--text); }
+  .theme-bento .host-sub { font-size: 11px; font-family: var(--mono); }
+  .theme-bento .label-input { font-size: 13px; color: var(--accent); }
+  .theme-bento .services { gap: 6px; }
+  .theme-bento .svc { gap: 5px; background: var(--panel-2); border-left: 3px solid;
+    border-radius: 10px; padding: 6px 10px; font-size: 12.5px; border-color: var(--line); }
+  .theme-bento .svc.link:hover { background: var(--svc-hover); border-color: var(--accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+  .theme-bento .svc .port { font-family: var(--mono); font-size: 12.5px; }
+  .theme-bento .svc .name { font-weight: 500; }
+  .theme-bento .no-svc { font-size: 12.5px; }
+  .theme-bento .containers { padding-top: 10px; }
+  .theme-bento .ct-head { font-size: 10.5px; margin-bottom: 6px; letter-spacing: .5px; }
+  .theme-bento .ct-list { gap: 4px; }
+  .theme-bento .ct { gap: 3px 8px; padding: 6px 10px; border-radius: 10px; border-left-width: 3px; }
+  .theme-bento .ct-name { font-size: 12.5px; gap: 4px; }
+  .theme-bento .ct.stopped { opacity: .5; }
+  .theme-bento .ct-img { font-size: 10px; }
+  .theme-bento .cport { font-family: var(--mono); font-size: 11px; border-radius: 6px; padding: 2px 7px; color: var(--text); }
+  .theme-bento .empty { padding: 80px 20px; font-size: 13.5px; }
+  .theme-bento .banner { padding: 12px 16px; border-radius: 12px; margin-bottom: 14px; font-size: 13px; border: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .theme-bento .ds-pills { gap: 4px; font-size: 10.5px; }
+  .theme-bento .ds-pill { padding: 2px 7px; border-radius: 6px; font-family: var(--mono); font-size: 10px; line-height: 1.6; }
+  .theme-bento .ds-pill .ds-lbl { font-weight: 700; }
+  .theme-bento .ds-stopped { font-size: 10.5px; }
+  .theme-bento .app-url-line { font-size: 11.5px; font-family: var(--mono); }
+  .theme-bento .app-url-line a.lan-link { font-size: 10.5px; }
+  .theme-bento .url-tag { font-family: var(--mono); font-size: 8px; font-weight: 700; border-radius: 5px;
+    min-width: 26px; padding: 2px 5px; }
+  .theme-bento .overlay { background: rgba(0,0,0,.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .theme-bento .modal { border-radius: 20px; padding: 28px; border-color: transparent;
+    box-shadow: 0 24px 48px rgba(0,0,0,.15), 0 0 0 1px var(--line); }
+  .theme-bento .modal h2 { font-size: 17px; font-weight: 700; color: var(--text); }
+  .theme-bento .modal .hint { font-size: 12.5px; margin-bottom: 18px; }
+  .theme-bento .field { margin-bottom: 14px; }
+  .theme-bento .field label { font-size: 11.5px; margin-bottom: 5px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+  .theme-bento .field input[type=text], .theme-bento .field input[type=number], .theme-bento .field select {
+    padding: 10px 12px; border-radius: 12px; font-size: 13.5px; background: var(--panel);
+    box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+  .theme-bento .field input:focus, .theme-bento .field select:focus {
+    box-shadow: 0 0 0 3px var(--glow), 0 1px 3px rgba(0,0,0,.04); }
+  .theme-bento .cat-row { border-radius: 12px; padding: 10px; margin-bottom: 6px; }
+  .theme-bento .cat-row input[type=text] { padding: 6px 8px; border-radius: 8px; font-size: 12px; }
+  .theme-bento .cat-row input[type=color] { width: 26px; height: 26px; border-radius: 8px; }
+  .theme-bento .cat-row .mini { border-radius: 8px; padding: 3px 8px; font-size: 12px; }
+  .theme-bento .modal-actions { gap: 8px; margin-top: 20px; }
+  .theme-bento .btn { padding: 8px 16px; border-radius: 10px; font-size: 13px; background: var(--panel);
+    box-shadow: 0 1px 3px rgba(0,0,0,.04); border-color: var(--line); }
+  .theme-bento .btn:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .theme-bento .btn.primary { background: var(--btn-primary-bg); color: var(--btn-primary-color);
+    border-color: var(--btn-primary-border); box-shadow: 0 2px 8px rgba(224,96,48,.20); }
+  .theme-bento .btn.primary:hover { box-shadow: 0 4px 16px rgba(224,96,48,.25); }
+  .theme-bento .svc-card { border-left-width: 3px; border-radius: 14px; padding: 12px 14px; border-color: transparent;
+    background: var(--panel); box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+  .theme-bento .svc-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08), 0 0 0 1px var(--accent); }
+  .theme-bento .svc-card .who { font-size: 11.5px; }
+
   /* ══════ Theme picker row ══════ */
   .theme-row { display: flex; gap: 8px; }
   .theme-opt { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -430,6 +599,18 @@
     background: #eef0f6; border-radius: 4px; display: block; font-style: normal; }
   .theme-opt .preview-min i::after { content: ""; position: absolute; top: 7px; width: 22px; height: 4px;
     background: #eef0f6; border-radius: 4px; }
+  .theme-opt .preview-bento { background: #f5f0eb; }
+  .theme-opt .preview-bento::after { content: ""; position: absolute; inset: 0; border-radius: 3px; }
+  .theme-opt .preview-bento span { position: absolute; left: 6px; top: 6px; width: 18px; height: 14px;
+    border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .theme-opt .preview-bento span::after { content: ""; position: absolute; left: 3px; top: 3px; width: 4px; height: 8px;
+    border-radius: 1px; background: #e06030; opacity: .6; }
+  .theme-opt .preview-bento i { position: absolute; left: 28px; top: 6px; width: 28px; height: 14px;
+    border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.08); display: block; font-style: normal; }
+  .theme-opt .preview-bento i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 4px; height: 8px;
+    border-radius: 1px; background: #e06030; opacity: .4; }
+  .theme-opt .preview-bento em { position: absolute; left: 6px; top: 24px; width: 50px; height: 18px;
+    border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.08); display: block; font-style: normal; }
   .theme-opt .tname { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
 
   @media (max-width: 640px) {
@@ -441,6 +622,10 @@
     .theme-minimal header { padding: 0 14px; height: 46px; gap: 8px; }
     .theme-minimal main { padding: 14px; }
     .theme-minimal .search { width: 140px; }
+    .theme-bento header { padding: 0 14px; height: 48px; gap: 8px; }
+    .theme-bento main { padding: 14px; }
+    .theme-bento .search { width: 140px; }
+    .theme-bento .apps { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -516,6 +701,10 @@
         <div class="theme-opt" id="topt_minimal" onclick="setStyle('minimal')">
           <div class="preview preview-min"><span></span><i></i></div>
           <div class="tname">Minimal</div>
+        </div>
+        <div class="theme-opt" id="topt_bento" onclick="setStyle('bento')">
+          <div class="preview preview-bento"><span></span><i></i><em></em></div>
+          <div class="tname">Bento</div>
         </div>
       </div>
     </div>
@@ -1076,7 +1265,9 @@ function saveSettingsForm(){
 function setStyle(style) {
   const root = document.documentElement;
   localStorage.setItem('ui_style', style);
-  root.classList.toggle('theme-minimal', style === 'minimal');
+  root.classList.remove('theme-minimal', 'theme-bento');
+  if (style === 'minimal') root.classList.add('theme-minimal');
+  else if (style === 'bento') root.classList.add('theme-bento');
   document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('on', el.id === 'topt_' + style));
 }
 
