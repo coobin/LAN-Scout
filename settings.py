@@ -26,6 +26,7 @@ _ALLOWED = {
     "targets", "full_targets", "ports", "interval", "service_detection",
     "timing", "skip_discovery", "docker_probe", "view", "host_sort",
     "categories", "hidden", "renames", "svc_cats", "docker_hosts", "ext_urls",
+    "bookmarks",
 }
 
 
@@ -53,6 +54,7 @@ def defaults() -> dict:
         "svc_cats": {},          # {"<ip>:<port>": "<category id>"} manual category
         "docker_hosts": "",      # space/comma separated manual docker hosts (e.g. "10.1.6.15:2375")
         "ext_urls": {},          # {"<ip>:<port>": "public url"} manual public URL mapping
+        "bookmarks": [],         # [{id, name, url, cat}] online web bookmarks
     }
 
 
@@ -145,6 +147,20 @@ def _validate(key: str, value, previous):
                 url = str(v).strip()[:200]
                 if url:
                     out[str(k)] = url
+            return out
+        return previous
+    if key == "bookmarks":
+        if isinstance(value, list):
+            out = []
+            for b in value[:500]:
+                if not isinstance(b, dict) or not b.get("name") or not b.get("url"):
+                    continue
+                out.append({
+                    "id": str(b.get("id") or f"bm{len(out)}")[:40],
+                    "name": str(b["name"])[:60],
+                    "url": str(b["url"])[:500],
+                    "cat": str(b.get("cat") or "")[:40],
+                })
             return out
         return previous
     return previous

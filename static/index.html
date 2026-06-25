@@ -749,12 +749,16 @@
   <div class="modal" style="max-width: 480px">
     <h2 data-i18n="addSvcTitle">添加自定义服务</h2>
     <div class="hint" data-i18n="addSvcHint">手动添加局域网内其他未被扫描到的服务。</div>
-    <div class="field"><label data-i18n="hostIp">主机 IP</label>
-      <input type="text" id="f_svc_ip" placeholder="192.168.1.100"></div>
-    <div class="field"><label data-i18n="port">端口</label>
-      <input type="number" id="f_svc_port" placeholder="80" min="1" max="65535"></div>
     <div class="field"><label data-i18n="svcName">服务名称</label>
       <input type="text" id="f_svc_name" placeholder="e.g. NAS / Blog"></div>
+    <div class="field"><label data-i18n="urlLabel">在线地址（可选，填写后 IP/端口可留空）</label>
+      <input type="url" id="f_svc_url" data-i18n-ph="urlPh" placeholder="https://example.com"></div>
+    <div class="row2">
+      <div class="field"><label data-i18n="hostIp">主机 IP</label>
+        <input type="text" id="f_svc_ip" placeholder="192.168.1.100"></div>
+      <div class="field"><label data-i18n="port">端口</label>
+        <input type="number" id="f_svc_port" placeholder="80" min="1" max="65535"></div>
+    </div>
     <div class="field"><label data-i18n="category">分类</label>
       <select id="f_svc_cat" style="width:100%;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:13px"></select></div>
     <div class="modal-actions">
@@ -805,7 +809,11 @@ const I18N = {
     wanPrompt: "请输入该服务的广域网/外网访问地址（例如 http://wan.myip.com:8080，留空清除）：",
     confirmCtrl: "确认要{0}容器吗？", ctrlFail: "操作失败：{0}",
     newCat: "新分类", catName: "名称", catPorts: "端口", catSvcName: "服务名",
-    scanning: "扫描中…"
+    scanning: "扫描中…",
+    urlLabel: "在线地址（可选，填写后 IP/端口可留空）",
+    urlPh: "https://example.com",
+    fillSvc: "请填写服务名称，以及 IP+端口 或 在线地址",
+    confirmDelBm: "确认要删除书签「{0}」吗？"
   },
   en: {
     nav: "Nav", host: "Hosts", sort: "Sort", ip: "IP", name: "Name", svcCount: "Services",
@@ -846,7 +854,11 @@ const I18N = {
     wanPrompt: "Enter WAN/external URL (e.g. http://wan.myip.com:8080, empty to clear):",
     confirmCtrl: "Confirm {0} container?", ctrlFail: "Operation failed: {0}",
     newCat: "New Category", catName: "Name", catPorts: "Ports", catSvcName: "Service name",
-    scanning: "Scanning…"
+    scanning: "Scanning…",
+    urlLabel: "URL (optional — if set, IP/port can be left empty)",
+    urlPh: "https://example.com",
+    fillSvc: "Please fill in a name, and either IP+port or a URL",
+    confirmDelBm: "Delete bookmark \"{0}\"?"
   }
 };
 let LANG = localStorage.getItem('ui_lang') || 'zh';
@@ -973,6 +985,10 @@ function renderCatFilter(){
       if(isHidden(h.ip,s) && !document.getElementById("showHidden").checked) continue;
       const c=catForSvc(h.ip,s); counts[c.id]=(counts[c.id]||0)+1;
     }
+  }
+  for(const bm of (STATE.settings.bookmarks||[])){
+    const c = bm.cat ? (allCats().find(x=>x.id===bm.cat)||UNCAT) : UNCAT;
+    counts[c.id]=(counts[c.id]||0)+1;
   }
   const cats=[...sortedCats(),UNCAT].filter(c=>counts[c.id]);
   const total=Object.values(counts).reduce((a,b)=>a+b,0);
@@ -1194,6 +1210,11 @@ function navView(hosts, showHidden){
       pushItem(catForSvc(h.ip,s),key,svcName(h.ip,s),url,h,h.ip,s.port,isHidden(h.ip,s),false);
     }
   }
+  for(const bm of (STATE.settings.bookmarks||[])){
+    const cat = bm.cat ? (allCats().find(c=>c.id===bm.cat)||UNCAT) : UNCAT;
+    if(activeCat && cat.id!==activeCat) continue;
+    items.push({cat,key:"bm:"+bm.id,name:bm.name,url:bm.url,host:null,ip:"",port:0,hidden:false,isDocker:false,isBookmark:true,bmId:bm.id});
+  }
   if(!items.length) return `<div class="empty">${t('noSvc')}</div>`;
   const order=[...sortedCats(),UNCAT];
   return order.map(c=>{
@@ -1214,6 +1235,21 @@ function navView(hosts, showHidden){
 }
 function appCard(it){
   const stop="event.preventDefault();event.stopPropagation();";
+
+  if(it.isBookmark){
+    return `<div class="app" onclick="window.open('${esc(it.url)}', '_blank', 'noopener')"
+        style="--ac:${it.cat.color}; cursor: pointer;">
+      <div class="acts" onclick="event.stopPropagation();" onmousedown="event.stopPropagation();">
+        <button class="pencil" title="${t('rename')}" onclick="${stop}renameBookmark('${it.bmId}')">✎</button>
+        <button class="del" onclick="${stop}deleteBookmark('${it.bmId}')">✕</button>
+      </div>
+      <div class="an">${esc(it.name)}</div>
+      <div class="app-url-line" onclick="event.stopPropagation();">
+        <a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.url)}</a>
+      </div>
+    </div>`;
+  }
+
   const del = !it.isDocker ? `<button class="del" title="${t('confirmDel',it.ip+':'+it.port)}" onclick="${stop}deleteSvc('${it.ip}',${it.port})">✕</button>` : "";
   const key = it.ip + ":" + it.port;
   const extUrl = (STATE.settings.ext_urls || {})[key];
@@ -1467,6 +1503,7 @@ function openAddSvc(){
   document.getElementById("f_svc_ip").value = "";
   document.getElementById("f_svc_port").value = "";
   document.getElementById("f_svc_name").value = "";
+  document.getElementById("f_svc_url").value = "";
   const sel = document.getElementById("f_svc_cat");
   sel.innerHTML = `<option value="">${t('defaultAuto')}</option>` +
     allCats().map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
@@ -1477,14 +1514,23 @@ async function submitAddSvc(){
   const ip = document.getElementById("f_svc_ip").value.trim();
   const port = parseInt(document.getElementById("f_svc_port").value);
   const name = document.getElementById("f_svc_name").value.trim();
-  
-  if(!ip || isNaN(port) || !name){
-    alert(t('fillAll'));
+  const url = document.getElementById("f_svc_url").value.trim();
+  const catId = document.getElementById("f_svc_cat").value;
+
+  if(!name || (!url && (!ip || isNaN(port)))){
+    alert(t('fillSvc'));
     return;
   }
-  
+
+  if(url && (!ip || isNaN(port))){
+    const bm = {id:"bm"+Date.now(), name, url, cat: catId||""};
+    const bms = [...(STATE.settings.bookmarks||[]), bm];
+    saveSettings({bookmarks: bms});
+    closeAddSvc();
+    return;
+  }
+
   try {
-    const catId = document.getElementById("f_svc_cat").value;
     const res = await fetch("/api/service/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1493,6 +1539,10 @@ async function submitAddSvc(){
     const data = await res.json();
     if (res.ok && data.ok) {
       if (catId) await assignCat(ip, port, catId);
+      if (url) {
+        const u = {...(STATE.settings.ext_urls||{})}; u[ip+":"+port] = url;
+        saveSettings({ext_urls: u});
+      }
       closeAddSvc();
       load();
     } else {
@@ -1501,6 +1551,19 @@ async function submitAddSvc(){
   } catch (e) {
     alert(t('netFail'));
   }
+}
+function deleteBookmark(id){
+  const bm = (STATE.settings.bookmarks||[]).find(b=>b.id===id);
+  if(!bm || !confirm(t('confirmDelBm', bm.name))) return;
+  saveSettings({bookmarks: (STATE.settings.bookmarks||[]).filter(b=>b.id!==id)});
+}
+function renameBookmark(id){
+  const bm = (STATE.settings.bookmarks||[]).find(b=>b.id===id);
+  if(!bm) return;
+  const name = prompt(t('renamePrompt'), bm.name);
+  if(name===null) return;
+  const bms = (STATE.settings.bookmarks||[]).map(b=>b.id===id?{...b,name:name.trim()||bm.name}:b);
+  saveSettings({bookmarks: bms});
 }
 
 async function setExtUrl(ip, port){
