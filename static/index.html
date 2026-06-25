@@ -18,17 +18,41 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
   :root {
-    --bg: #0a0b10; --panel: rgba(0,255,136,.02); --panel-2: rgba(0,255,136,.04); --line: rgba(0,255,136,.10);
-    --text: #c8d0d8; --muted: #3a4550; --accent: #00ff88; --accent-2: #00d4ff;
-    --up: #00ff88; --down: #334; --danger: #ff3b5c; --radius: 4px;
-    --banner-bg: rgba(255,59,92,.08); --banner-text: #ff6b8a;
-    --svc-hover: rgba(0,255,136,.06);
-    --ct-border: #00ff88;
-    --cport-bg: rgba(0,255,136,.06); --cport-border: rgba(0,255,136,.15);
-    --header-bg: rgba(10,11,16,.92);
-    --glow: rgba(0,255,136,.12);
+    --bg: #f4f5f0; --panel: rgba(40,80,60,.03); --panel-2: rgba(40,80,60,.05); --line: rgba(40,80,60,.12);
+    --text: #2a2f25; --muted: #8a9080; --accent: #2d8a56; --accent-2: #1a7a8a;
+    --up: #2d8a56; --down: #b8bab0; --danger: #c0392b; --radius: 4px;
+    --banner-bg: rgba(192,57,43,.06); --banner-text: #c0392b;
+    --svc-hover: rgba(45,138,86,.06);
+    --ct-border: #2d8a56;
+    --cport-bg: rgba(45,138,86,.06); --cport-border: rgba(45,138,86,.15);
+    --header-bg: rgba(244,245,240,.92);
+    --glow: rgba(45,138,86,.10);
     --mono: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
-    --scan: rgba(0,255,136,.8);
+    --scan: rgba(45,138,86,.8);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light-theme) {
+      --bg: #0e100d; --panel: rgba(45,138,86,.03); --panel-2: rgba(45,138,86,.05); --line: rgba(45,138,86,.12);
+      --text: #b8c0b0; --muted: #445040; --accent: #4eca7a; --accent-2: #45b8c4;
+      --up: #4eca7a; --down: #334030; --danger: #e05545;
+      --banner-bg: rgba(224,85,69,.08); --banner-text: #e88070;
+      --svc-hover: rgba(78,202,122,.06);
+      --ct-border: #4eca7a;
+      --cport-bg: rgba(78,202,122,.06); --cport-border: rgba(78,202,122,.15);
+      --header-bg: rgba(14,16,13,.92);
+      --glow: rgba(78,202,122,.12);
+    }
+  }
+  :root.dark-theme {
+    --bg: #0e100d; --panel: rgba(45,138,86,.03); --panel-2: rgba(45,138,86,.05); --line: rgba(45,138,86,.12);
+    --text: #b8c0b0; --muted: #445040; --accent: #4eca7a; --accent-2: #45b8c4;
+    --up: #4eca7a; --down: #334030; --danger: #e05545;
+    --banner-bg: rgba(224,85,69,.08); --banner-text: #e88070;
+    --svc-hover: rgba(78,202,122,.06);
+    --ct-border: #4eca7a;
+    --cport-bg: rgba(78,202,122,.06); --cport-border: rgba(78,202,122,.15);
+    --header-bg: rgba(14,16,13,.92);
+    --glow: rgba(78,202,122,.12);
   }
   * { box-sizing: border-box; margin: 0; }
   html { overflow-y: scroll; }
@@ -251,6 +275,7 @@
   <span class="spacer"></span>
   <input class="search" id="search" placeholder="/ search">
   <button class="hbtn" onclick="openCats()">cat</button>
+  <button class="hbtn" id="themeBtn" onclick="toggleTheme()">theme</button>
   <button class="hbtn" onclick="openAddSvc()">+add</button>
   <button class="hbtn" onclick="openSettings()">cfg</button>
   <button class="hbtn accent" id="scanBtn" onclick="triggerScan()">scan</button>
