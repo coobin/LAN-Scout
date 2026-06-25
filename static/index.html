@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LAN Scout · 局域网服务导航</title>
+<title>LAN Scout</title>
 <script>
   (function() {
     const root = document.documentElement;
@@ -635,9 +635,6 @@
   <div class="meta" id="meta"></div>
   <span class="spacer"></span>
   <input class="search" id="search" placeholder="/ search">
-  <button class="hbtn" onclick="openCats()">cat</button>
-  <button class="hbtn" id="modeBtn" onclick="toggleMode()">🌙</button>
-  <button class="hbtn" onclick="openAddSvc()">+add</button>
   <button class="hbtn" onclick="openSettings()">cfg</button>
   <button class="hbtn accent" id="scanBtn" onclick="triggerScan()">scan</button>
 </header>
@@ -646,53 +643,57 @@
   <div class="stats" id="stats"></div>
   <div class="topbar">
     <div class="tabs" id="viewSeg">
-      <button data-view="nav" onclick="setView('nav')">导航</button>
-      <button data-view="host" onclick="setView('host')">服务</button>
+      <button data-view="nav" data-i18n="nav" onclick="setView('nav')">导航</button>
+      <button data-view="host" data-i18n="host" onclick="setView('host')">服务</button>
     </div>
-    <label class="toggle" id="sortWrap">排序
+    <label class="toggle" id="sortWrap" data-i18n="sort">排序
       <select class="ctl" id="hostSort" onchange="setSort(this.value)">
-        <option value="ip">IP</option>
-        <option value="label">名称</option>
-        <option value="services">服务数</option>
-        <option value="last_seen">最近发现</option>
+        <option value="ip" data-i18n="ip">IP</option>
+        <option value="label" data-i18n="name">名称</option>
+        <option value="services" data-i18n="svcCount">服务数</option>
+        <option value="last_seen" data-i18n="lastSeen">最近发现</option>
       </select>
     </label>
-    <label class="toggle"><input type="checkbox" id="showHidden" onchange="render()"> 显示隐藏</label>
+    <label class="toggle"><input type="checkbox" id="showHidden" onchange="render()"> <span data-i18n="showHidden">显示隐藏</span></label>
   </div>
   <div class="catfilter" id="catFilter"></div>
   <div id="content"></div>
-  <div class="empty" id="empty" style="display:none">还没有数据，点击「扫描」开始探测局域网。</div>
+  <div class="empty" id="empty" style="display:none" data-i18n="emptyData">还没有数据，点击「扫描」开始探测局域网。</div>
 </main>
 
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeSettings()">
   <div class="modal">
-    <h2>设置</h2>
-    <div class="hint">修改后点「保存」生效；网段/间隔的更改下次扫描时应用。</div>
-    <div class="field"><label>扫描目标（网段 / IP / 范围，支持多个，空格或逗号分隔）</label>
+    <h2 data-i18n="settings">设置</h2>
+    <div class="hint" data-i18n="settingsHint">修改后点「保存」生效；网段/间隔的更改下次扫描时应用。</div>
+    <div class="field"><label data-i18n="targets">扫描目标（网段 / IP / 范围，支持多个，空格或逗号分隔）</label>
       <input type="text" id="f_targets" placeholder="192.168.1.0/24 10.0.0.0/24"></div>
-    <div class="field"><label>完整扫描主机（额外用 -Pn + 全端口单独扫，结果合并；适合本机等普扫漏服务的主机）</label>
-      <input type="text" id="f_full" placeholder="留空则关闭，如 10.1.6.15"></div>
-    <div class="field"><label>手动 Docker 目标（IP:端口，支持多个，空格或逗号分隔；添加后将自动持续对其进行容器和服务扫描）</label>
+    <div class="field"><label data-i18n="fullTargets">完整扫描主机（额外用 -Pn + 全端口单独扫，结果合并；适合本机等普扫漏服务的主机）</label>
+      <input type="text" id="f_full" data-i18n-ph="fullPh" placeholder="留空则关闭，如 10.1.6.15"></div>
+    <div class="field"><label data-i18n="dockerTargets">手动 Docker 目标（IP:端口，支持多个，空格或逗号分隔；添加后将自动持续对其进行容器和服务扫描）</label>
       <div style="display:flex;gap:8px">
-        <input type="text" id="f_docker_hosts" placeholder="例如 10.1.6.15:2375" style="flex:1">
-        <button class="btn" id="addDockerBtn" onclick="addDockerAddressFromSettings(event)" style="white-space:nowrap">🐳 探测并添加</button>
+        <input type="text" id="f_docker_hosts" placeholder="e.g. 10.1.6.15:2375" style="flex:1">
+        <button class="btn" id="addDockerBtn" onclick="addDockerAddressFromSettings(event)" style="white-space:nowrap" data-i18n="dockerProbe">🐳 探测并添加</button>
       </div>
     </div>
     <div class="row2">
-      <div class="field"><label>端口列表（逗号分隔，- 表示 top-1000）</label>
+      <div class="field"><label data-i18n="ports">端口列表（逗号分隔，- 表示 top-1000）</label>
         <input type="text" id="f_ports"></div>
-      <div class="field"><label>自动扫描间隔（分钟，0 关闭）</label>
+      <div class="field"><label data-i18n="interval">自动扫描间隔（分钟，0 关闭）</label>
         <input type="number" id="f_interval" min="0" step="1"></div>
     </div>
     <div class="row2">
-      <div class="field"><label>nmap 计时模板 (0-5)</label>
+      <div class="field"><label data-i18n="timing">nmap 计时模板 (0-5)</label>
         <input type="number" id="f_timing" min="0" max="5"></div>
       <div class="field"><label>&nbsp;</label>
-        <label class="toggle" style="margin-bottom:8px"><input type="checkbox" id="f_sv"> 服务/版本探测 (-sV)</label>
-        <label class="toggle" style="margin-bottom:8px"><input type="checkbox" id="f_pn"> 跳过主机发现 (-Pn) — 扫指定 IP / 不回 ping 的主机时开启</label>
-        <label class="toggle"><input type="checkbox" id="f_docker"> 🐳 Docker 探测 — 对开放 2375 的主机直接列出全部容器</label></div>
+        <label class="toggle" style="margin-bottom:8px" data-i18n="svcDetect"><input type="checkbox" id="f_sv"> 服务/版本探测 (-sV)</label>
+        <label class="toggle" style="margin-bottom:8px" data-i18n="skipDiscovery"><input type="checkbox" id="f_pn"> 跳过主机发现 (-Pn) — 扫指定 IP / 不回 ping 的主机时开启</label>
+        <label class="toggle" data-i18n="dockerToggle"><input type="checkbox" id="f_docker"> 🐳 Docker 探测 — 对开放 2375 的主机直接列出全部容器</label></div>
     </div>
-    <div class="field"><label>界面风格</label>
+    <div class="row2" style="margin-bottom:14px">
+      <button class="btn" onclick="closeSettings();openCats()" data-i18n="catMgr">分类管理</button>
+      <button class="btn" onclick="closeSettings();openAddSvc()" data-i18n="addSvc">+ 添加服务</button>
+    </div>
+    <div class="field"><label data-i18n="style">界面风格</label>
       <div class="theme-row">
         <div class="theme-opt" id="topt_cyberpunk" onclick="setStyle('cyberpunk')">
           <div class="preview preview-cyber"><span></span><i></i></div>
@@ -708,59 +709,174 @@
         </div>
       </div>
     </div>
-    <div class="field"><label>明暗模式</label>
-      <select id="f_mode" onchange="setMode(this.value)" style="width:auto;background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:5px 8px;border-radius:var(--radius);font-size:11px">
-        <option value="auto">🌗 跟随系统</option>
-        <option value="light">☀️ 浅色</option>
-        <option value="dark">🌙 深色</option>
-      </select>
+    <div class="row2">
+      <div class="field"><label data-i18n="mode">明暗模式</label>
+        <select id="f_mode" onchange="setMode(this.value)" style="width:auto;background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:5px 8px;border-radius:var(--radius);font-size:11px">
+          <option value="auto" data-i18n="modeAuto">🌗 跟随系统</option>
+          <option value="light" data-i18n="modeLight">☀️ 浅色</option>
+          <option value="dark" data-i18n="modeDark">🌙 深色</option>
+        </select>
+      </div>
+      <div class="field"><label data-i18n="lang">语言</label>
+        <select id="f_lang" onchange="setLang(this.value)" style="width:auto;background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:5px 8px;border-radius:var(--radius);font-size:11px">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+      </div>
     </div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeSettings()">取消</button>
-      <button class="btn primary" onclick="saveSettingsForm()">保存</button>
+      <button class="btn" onclick="closeSettings()" data-i18n="cancel">取消</button>
+      <button class="btn primary" onclick="saveSettingsForm()" data-i18n="save">保存</button>
     </div>
   </div>
 </div>
 
 <div class="overlay" id="catOverlay" onclick="if(event.target===this&&!_catDragging)closeCats()">
   <div class="modal">
-    <h2>服务分类</h2>
-    <div class="hint">分类决定导航页的分组与颜色。一个服务归入第一个匹配其端口或服务名的分类；
+    <h2 data-i18n="catTitle">服务分类</h2>
+    <div class="hint" data-i18n="catHint">分类决定导航页的分组与颜色。一个服务归入第一个匹配其端口或服务名的分类；
       也可以在卡片上用下拉框把某个服务直接指定到分类。👁 可隐藏整类。</div>
     <div id="catEditor"></div>
-    <button class="btn" onclick="addCat()">+ 新增分类</button>
+    <button class="btn" onclick="addCat()" data-i18n="addCat">+ 新增分类</button>
     <div class="modal-actions">
-      <button class="btn" onclick="closeCats()">取消</button>
-      <button class="btn primary" onclick="saveCats()">保存</button>
+      <button class="btn" onclick="closeCats()" data-i18n="cancel">取消</button>
+      <button class="btn primary" onclick="saveCats()" data-i18n="save">保存</button>
     </div>
   </div>
 </div>
 
 <div class="overlay" id="svcOverlay" onclick="if(event.target===this)closeAddSvc()">
   <div class="modal" style="max-width: 480px">
-    <h2>添加自定义服务</h2>
-    <div class="hint">手动添加局域网内其他未被扫描到的服务。</div>
-    <div class="field"><label>主机 IP</label>
-      <input type="text" id="f_svc_ip" placeholder="例如 192.168.1.100"></div>
-    <div class="field"><label>端口</label>
-      <input type="number" id="f_svc_port" placeholder="例如 80" min="1" max="65535"></div>
-    <div class="field"><label>服务名称</label>
-      <input type="text" id="f_svc_name" placeholder="例如 我的群晖 / 博客"></div>
-    <div class="field"><label>分类</label>
+    <h2 data-i18n="addSvcTitle">添加自定义服务</h2>
+    <div class="hint" data-i18n="addSvcHint">手动添加局域网内其他未被扫描到的服务。</div>
+    <div class="field"><label data-i18n="hostIp">主机 IP</label>
+      <input type="text" id="f_svc_ip" placeholder="192.168.1.100"></div>
+    <div class="field"><label data-i18n="port">端口</label>
+      <input type="number" id="f_svc_port" placeholder="80" min="1" max="65535"></div>
+    <div class="field"><label data-i18n="svcName">服务名称</label>
+      <input type="text" id="f_svc_name" placeholder="e.g. NAS / Blog"></div>
+    <div class="field"><label data-i18n="category">分类</label>
       <select id="f_svc_cat" style="width:100%;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:13px"></select></div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeAddSvc()">取消</button>
-      <button class="btn primary" onclick="submitAddSvc()">添加</button>
+      <button class="btn" onclick="closeAddSvc()" data-i18n="cancel">取消</button>
+      <button class="btn primary" onclick="submitAddSvc()" data-i18n="add">添加</button>
     </div>
   </div>
 </div>
 
 <script>
+const I18N = {
+  zh: {
+    nav: "导航", host: "服务", sort: "排序", ip: "IP", name: "名称", svcCount: "服务数",
+    lastSeen: "最近发现", showHidden: "显示隐藏", emptyData: "还没有数据，点击「扫描」开始探测局域网。",
+    settings: "设置", settingsHint: "修改后点「保存」生效；网段/间隔的更改下次扫描时应用。",
+    targets: "扫描目标（网段 / IP / 范围，支持多个，空格或逗号分隔）",
+    fullTargets: "完整扫描主机（额外用 -Pn + 全端口单独扫，结果合并；适合本机等普扫漏服务的主机）",
+    fullPh: "留空则关闭，如 10.1.6.15",
+    dockerTargets: "手动 Docker 目标（IP:端口，支持多个，空格或逗号分隔；添加后将自动持续对其进行容器和服务扫描）",
+    dockerProbe: "🐳 探测并添加", ports: "端口列表（逗号分隔，- 表示 top-1000）",
+    interval: "自动扫描间隔（分钟，0 关闭）", timing: "nmap 计时模板 (0-5)",
+    svcDetect: "服务/版本探测 (-sV)",
+    skipDiscovery: "跳过主机发现 (-Pn) — 扫指定 IP / 不回 ping 的主机时开启",
+    dockerToggle: "🐳 Docker 探测 — 对开放 2375 的主机直接列出全部容器",
+    catMgr: "分类管理", addSvc: "+ 添加服务", style: "界面风格", mode: "明暗模式",
+    lang: "语言", modeAuto: "🌗 跟随系统", modeLight: "☀️ 浅色", modeDark: "🌙 深色",
+    cancel: "取消", save: "保存",
+    catTitle: "服务分类",
+    catHint: "分类决定导航页的分组与颜色。一个服务归入第一个匹配其端口或服务名的分类；也可以在卡片上用下拉框把某个服务直接指定到分类。👁 可隐藏整类。",
+    addCat: "+ 新增分类", addSvcTitle: "添加自定义服务",
+    addSvcHint: "手动添加局域网内其他未被扫描到的服务。",
+    hostIp: "主机 IP", port: "端口", svcName: "服务名称", category: "分类", add: "添加",
+    uncat: "未分类", defaultCat: "默认", classify: "归类",
+    rename: "重命名", show: "显示", hide: "隐藏", device: "未命名设备",
+    allCat: "全部", noNonWeb: "没有非 Web 服务。所有已发现的服务都可以通过浏览器直接访问，已显示在「导航」中。",
+    noSvc: "没有可访问的服务。切换到「服务」视图查看完整结果，或点击「扫描」。",
+    noNmap: "未检测到 nmap，无法扫描。请先安装 nmap。", scanFail: "上次扫描失败：",
+    stopped: "已停止", start: "启动", stop: "停止",
+    wanEnabled: "广域网外网访问已启用", wanLabel: "WAN (外网)", lanLabel: "LAN (内网)",
+    setWan: "设置外网地址", notSet: "未配置",
+    renamePrompt: "服务自定义名称（留空清除）：",
+    confirmDel: "确认要删除 {0} 上的服务吗？", delFail: "删除服务失败", delErr: "删除服务发生错误",
+    dockerPrompt: "请输入 Docker 守护进程地址（例如 10.1.6.15 或 10.1.6.15:2375）：",
+    probing: "探测中…", dockerOk: "成功连接到 Docker，发现 {0} 个容器！",
+    dockerFail: "添加 Docker 失败：{0}", netErr: "网络请求失败，请检查服务状态",
+    defaultAuto: "默认（按端口自动匹配）", fillAll: "请完整填写 IP、端口和服务名称",
+    addFail: "添加服务失败：{0}", netFail: "网络请求失败",
+    wanPrompt: "请输入该服务的广域网/外网访问地址（例如 http://wan.myip.com:8080，留空清除）：",
+    confirmCtrl: "确认要{0}容器吗？", ctrlFail: "操作失败：{0}",
+    newCat: "新分类", catName: "名称", catPorts: "端口", catSvcName: "服务名",
+    scanning: "扫描中…"
+  },
+  en: {
+    nav: "Nav", host: "Hosts", sort: "Sort", ip: "IP", name: "Name", svcCount: "Services",
+    lastSeen: "Last seen", showHidden: "Show hidden", emptyData: "No data yet. Click \"Scan\" to start.",
+    settings: "Settings", settingsHint: "Click \"Save\" to apply. Network/interval changes take effect on next scan.",
+    targets: "Scan targets (subnets / IPs / ranges, space or comma separated)",
+    fullTargets: "Full scan hosts (extra -Pn + all ports, results merged)",
+    fullPh: "Leave empty to disable, e.g. 10.1.6.15",
+    dockerTargets: "Docker targets (IP:port, space or comma separated)",
+    dockerProbe: "🐳 Probe & Add", ports: "Port list (comma separated, - for top-1000)",
+    interval: "Auto scan interval (min, 0 to disable)", timing: "nmap timing template (0-5)",
+    svcDetect: "Service/version detection (-sV)",
+    skipDiscovery: "Skip host discovery (-Pn) — for specific IPs that don't respond to ping",
+    dockerToggle: "🐳 Docker probe — list containers on hosts with port 2375 open",
+    catMgr: "Categories", addSvc: "+ Add Service", style: "Theme", mode: "Appearance",
+    lang: "Language", modeAuto: "🌗 Auto", modeLight: "☀️ Light", modeDark: "🌙 Dark",
+    cancel: "Cancel", save: "Save",
+    catTitle: "Categories",
+    catHint: "Categories group services by port or name on the Nav page. Use the dropdown on cards to assign manually. 👁 hides a whole category.",
+    addCat: "+ New Category", addSvcTitle: "Add Custom Service",
+    addSvcHint: "Manually add services not discovered by scanning.",
+    hostIp: "Host IP", port: "Port", svcName: "Service name", category: "Category", add: "Add",
+    uncat: "Uncategorized", defaultCat: "Default", classify: "Classify",
+    rename: "Rename", show: "Show", hide: "Hide", device: "Unnamed device",
+    allCat: "All", noNonWeb: "No non-web services. All discovered services are accessible via browser in Nav view.",
+    noSvc: "No accessible services. Switch to Hosts view or click Scan.",
+    noNmap: "nmap not found. Please install nmap first.", scanFail: "Last scan failed: ",
+    stopped: "Stopped", start: "Start", stop: "Stop",
+    wanEnabled: "WAN access enabled", wanLabel: "WAN", lanLabel: "LAN",
+    setWan: "Set WAN URL", notSet: "Not set",
+    renamePrompt: "Custom service name (empty to clear):",
+    confirmDel: "Delete service at {0}?", delFail: "Failed to delete service", delErr: "Error deleting service",
+    dockerPrompt: "Enter Docker daemon address (e.g. 10.1.6.15 or 10.1.6.15:2375):",
+    probing: "Probing…", dockerOk: "Connected to Docker, found {0} containers!",
+    dockerFail: "Failed to add Docker: {0}", netErr: "Network error, check service status",
+    defaultAuto: "Default (auto-match by port)", fillAll: "Please fill in IP, port and service name",
+    addFail: "Failed to add service: {0}", netFail: "Network error",
+    wanPrompt: "Enter WAN/external URL (e.g. http://wan.myip.com:8080, empty to clear):",
+    confirmCtrl: "Confirm {0} container?", ctrlFail: "Operation failed: {0}",
+    newCat: "New Category", catName: "Name", catPorts: "Ports", catSvcName: "Service name",
+    scanning: "Scanning…"
+  }
+};
+let LANG = localStorage.getItem('ui_lang') || 'zh';
+function t(k, ...args) {
+  let s = (I18N[LANG] || I18N.zh)[k] || (I18N.zh)[k] || k;
+  args.forEach((a, i) => { s = s.replace(`{${i}}`, a); });
+  return s;
+}
+function setLang(lang) {
+  LANG = lang;
+  localStorage.setItem('ui_lang', lang);
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (el.tagName === 'OPTION') el.textContent = t(k);
+    else if (el.tagName === 'LABEL' && (el.querySelector('input') || el.querySelector('select'))) {
+      const child = el.querySelector('input') || el.querySelector('select');
+      el.textContent = ' ' + t(k);
+      el.prepend(child);
+    } else el.textContent = t(k);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+  render(true);
+}
+
 let STATE = { hosts: [], settings: null, scanning: false };
 let EDIT_CATS = [];
-let activeCat = null;   // selected category id for the top filter bar
+let activeCat = null;
 let pollTimer = null;
-const UNCAT = { id: "_other", name: "未分类", color: "#6b7280", order: 9999, visible: true };
+const UNCAT = { id: "_other", get name(){ return t('uncat'); }, color: "#6b7280", order: 9999, visible: true };
 
 const WEB = { http:"http", https:"https", "https-alt":"https", "http-proxy":"http",
   "http-alt":"http", "ssl/http":"https", caldav:"http", webcache:"http" };
@@ -813,10 +929,10 @@ async function assignCat(ip, port, catId){
 }
 function catSelect(ip, port, curId){
   const def = catFor({port: port});
-  const defOpt = `<option value="" ${!curId?"selected":""}>默认 (${def.name})</option>`;
+  const defOpt = `<option value="" ${!curId?"selected":""}>${t('defaultCat')} (${def.name})</option>`;
   const opts=allCats().map(c=>`<option value="${c.id}" ${c.id===curId?"selected":""}>${esc(c.name)}</option>`).join("");
   const stop="event.stopPropagation();";
-  return `<select class="catpick" title="归类" onclick="${stop}" onmousedown="${stop}"
+  return `<select class="catpick" title="${t('classify')}" onclick="${stop}" onmousedown="${stop}"
     onchange="${stop}assignCat('${ip}',${port},this.value)">${defOpt}${opts}</select>`;
 }
 // Display name: user rename wins, else identified product, else nmap name.
@@ -843,7 +959,7 @@ async function toggleHidden(ip, port){
 function setCatFilter(id){ activeCat = (activeCat===id) ? null : id; render(); }
 async function renameSvc(ip, port){
   const key=ip+":"+port, cur=(STATE.settings.renames||{})[key]||"";
-  const name=prompt("服务自定义名称（留空清除）：", cur);
+  const name=prompt(t('renamePrompt'), cur);
   if (name===null) return;            // cancelled
   const r={...(STATE.settings.renames||{})};
   if (name.trim()) r[key]=name.trim(); else delete r[key];
@@ -864,7 +980,7 @@ function renderCatFilter(){
       onclick="setCatFilter('${c.id}')"><span class="sw" style="background:${c.color}"></span>${esc(c.name)}
       <span class="cnt">${counts[c.id]}</span></button>`).join("");
   document.getElementById("catFilter").innerHTML = (cats.length>1)
-    ? `<button class="catchip ${!activeCat?"on":""}" onclick="setCatFilter(null)">全部 <span class="cnt">${total}</span></button>`+chips
+    ? `<button class="catchip ${!activeCat?"on":""}" onclick="setCatFilter(null)">${t('allCat')} <span class="cnt">${total}</span></button>`+chips
     : "";
 }
 async function saveLabel(ip, label){
@@ -892,7 +1008,7 @@ function render(force){
     `target:<b>${esc(st.targets)}</b> last:<b>${fmtTime(ls?.finished_at)}</b>` +
     (st.interval ? ` interval:<b>${Math.round(st.interval/60)}m</b>` : "");
   const btn=document.getElementById("scanBtn");
-  btn.disabled=STATE.scanning; btn.textContent=STATE.scanning?"scanning...":"scan";
+  btn.disabled=STATE.scanning; btn.textContent=STATE.scanning?t('scanning'):"scan";
   const effView = st.view==="host" ? "host" : "nav";   // legacy "category" → nav
   document.querySelectorAll("#viewSeg button").forEach(b=>b.classList.toggle("on",b.dataset.view===effView));
   document.getElementById("hostSort").value = st.host_sort;
@@ -902,8 +1018,8 @@ function render(force){
   pollTimer=setInterval(load, STATE.scanning?1500:8000);
 
   let banner="";
-  if(!STATE.nmap_available) banner=`<div class="banner">未检测到 nmap，无法扫描。请先安装 nmap。</div>`;
-  else if(ls?.error) banner=`<div class="banner">上次扫描失败：${esc(ls.error)}</div>`;
+  if(!STATE.nmap_available) banner=`<div class="banner">${t('noNmap')}</div>`;
+  else if(ls?.error) banner=`<div class="banner">${t('scanFail')}${esc(ls.error)}</div>`;
   document.getElementById("banner").innerHTML=banner;
 
   const detail = st.view==="host";
@@ -963,30 +1079,30 @@ function svcChip(ip, s, showHidden){
   const tooltipParts = [];
   if (desc) tooltipParts.push(desc);
   if (extUrl) {
-    tooltipParts.push(`广域网外网访问已启用`);
-    tooltipParts.push(`WAN (外网): ${extUrl}`);
-    tooltipParts.push(`LAN (内网): ${lanUrl}`);
+    tooltipParts.push(t('wanEnabled'));
+    tooltipParts.push(`${t('wanLabel')}: ${extUrl}`);
+    tooltipParts.push(`${t('lanLabel')}: ${lanUrl}`);
   } else if (url) {
-    tooltipParts.push(`LAN (内网): ${lanUrl}`);
+    tooltipParts.push(`${t('lanLabel')}: ${lanUrl}`);
   }
   const titleAttr = tooltipParts.length ? `title="${esc(tooltipParts.join("\n"))}"` : "";
 
   const inner=`<span class="port">${s.port}</span>`+
     (main?`<span class="name">${esc(main)}</span>`:"")+
     (s.version?`<span class="ver">${esc(s.version)}</span>`:"")+
-    (extUrl?`<span style="margin-left:2px;font-size:11px" title="广域网外网访问已配置">🌐</span>`:"")+
+    (extUrl?`<span style="margin-left:2px;font-size:11px" title="${t('wanEnabled')}">🌐</span>`:"")+
     (url?`<span class="arrow">↗</span>`:"");
     
   const stop="event.preventDefault();event.stopPropagation();";
-  const pen=`<button class="pencil" title="重命名" onclick="${stop}renameSvc('${ip}',${s.port})">✎</button>`;
-  const eye=`<button class="eye" title="${hidden?"显示":"隐藏"}" onclick="${stop}toggleHidden('${ip}',${s.port})">${hidden?"🚫":"👁"}</button>`;
-  const del=`<button class="del" title="删除服务" onclick="${stop}deleteSvc('${ip}',${s.port})">✕</button>`;
+  const pen=`<button class="pencil" title="${t('rename')}" onclick="${stop}renameSvc('${ip}',${s.port})">✎</button>`;
+  const eye=`<button class="eye" title="${hidden?t('show'):t('hide')}" onclick="${stop}toggleHidden('${ip}',${s.port})">${hidden?"🚫":"👁"}</button>`;
+  const del=`<button class="del" title="${t('confirmDel',ip+':'+s.port)}" onclick="${stop}deleteSvc('${ip}',${s.port})">✕</button>`;
   const style=`style="border-left-color:${cat.color}"`;
   const cls=`svc${url?" link":""}${hidden?" hidden":""}`;
   
   // 如果配置了 extUrl，则 🌐 图标加 active class，使得其一直高亮显示，且鼠标悬停时提示当前外网地址
   const extCls = extUrl ? "ext active" : "ext";
-  const ext=url ? `<button class="${extCls}" title="设置外网地址 (当前: ${esc(extUrl || "未配置")})" onclick="${stop}setExtUrl('${ip}',${s.port})">🌐</button>` : "";
+  const ext=url ? `<button class="${extCls}" title="${t('setWan')} (${esc(extUrl || t('notSet'))})" onclick="${stop}setExtUrl('${ip}',${s.port})">🌐</button>` : "";
   
   return url
     ? `<span class="${cls}" ${style}><a href="${url}" target="_blank" rel="noopener" ${titleAttr} style="text-decoration:none;display:inline-flex;gap:6px;align-items:center">${inner}</a>${catSelect(ip,s.port,(STATE.settings.svc_cats||{})[ip+":"+s.port])}${pen}${eye}${del}${ext}</span>`
@@ -1009,7 +1125,7 @@ function renderDockerStats(ct) {
     if (mm) {
       const mb = parseFloat(mm[1]), pct = pm ? parseFloat(pm[1]) : 0;
       const c = pct > 85 ? "crit" : pct > 55 ? "warn" : "ok";
-      pills.push(`<span class="ds-pill ${c}" title="内存 ${mb}MB (${pct}%)"><span class="ds-lbl">MEM</span>${mb}M</span>`);
+      pills.push(`<span class="ds-pill ${c}" title="MEM ${mb}MB (${pct}%)"><span class="ds-lbl">MEM</span>${mb}M</span>`);
     }
   }
   return pills.length ? `<span class="ds-pills">${pills.join("")}</span>` : "";
@@ -1023,7 +1139,7 @@ function containerRow(ip, ct){
       title="${p.public}→${p.private||"?"}/${p.type||"tcp"}">${p.public}<span style="opacity:.5">↗</span></a>`;
   }).join("");
   const internal=(ct.ports||[]).filter(p=>!p.public)
-    .map(p=>`<span class="cport int" title="未发布到宿主机">${p.private}</span>`).join("");
+    .map(p=>`<span class="cport int">${p.private}</span>`).join("");
   const stopped=ct.state && ct.state!=="running";
   
   let statsHtml = "";
@@ -1033,13 +1149,13 @@ function containerRow(ip, ct){
       statsHtml += ` <span class="ds-stopped" style="margin-left:4px">· ${esc(ct.status.replace("Up ", ""))}</span>`;
     }
   } else {
-    statsHtml = `<span class="ds-stopped">已停止 (${ct.state || "exited"})</span>`;
+    statsHtml = `<span class="ds-stopped">${t('stopped')} (${ct.state || "exited"})</span>`;
   }
-  
+
   const dockerPort = getDockerPortForHost(ip);
   const ctrlBtn = stopped
-    ? `<button class="btn-ct-ctrl start" title="启动" onclick="event.stopPropagation();controlContainer('${ip}', ${dockerPort}, '${ct.id || ct.name}', 'start')">▶</button>`
-    : `<button class="btn-ct-ctrl stop" title="停止" onclick="event.stopPropagation();controlContainer('${ip}', ${dockerPort}, '${ct.id || ct.name}', 'stop')">⏹</button>`;
+    ? `<button class="btn-ct-ctrl start" title="${t('start')}" onclick="event.stopPropagation();controlContainer('${ip}', ${dockerPort}, '${ct.id || ct.name}', 'start')">▶</button>`
+    : `<button class="btn-ct-ctrl stop" title="${t('stop')}" onclick="event.stopPropagation();controlContainer('${ip}', ${dockerPort}, '${ct.id || ct.name}', 'stop')">⏹</button>`;
   
   return `<div class="ct ${stopped?"stopped":""}">
     <span class="ct-name">🐳 ${esc(ct.name)} ${ctrlBtn}</span>
@@ -1078,7 +1194,7 @@ function navView(hosts, showHidden){
       pushItem(catForSvc(h.ip,s),key,svcName(h.ip,s),url,h,h.ip,s.port,isHidden(h.ip,s),false);
     }
   }
-  if(!items.length) return `<div class="empty">没有可访问的服务。切换到「服务」视图查看完整结果，或点击「扫描」。</div>`;
+  if(!items.length) return `<div class="empty">${t('noSvc')}</div>`;
   const order=[...sortedCats(),UNCAT];
   return order.map(c=>{
     const k=STATE.settings.host_sort;
@@ -1098,13 +1214,13 @@ function navView(hosts, showHidden){
 }
 function appCard(it){
   const stop="event.preventDefault();event.stopPropagation();";
-  const del = !it.isDocker ? `<button class="del" title="删除服务" onclick="${stop}deleteSvc('${it.ip}',${it.port})">✕</button>` : "";
+  const del = !it.isDocker ? `<button class="del" title="${t('confirmDel',it.ip+':'+it.port)}" onclick="${stop}deleteSvc('${it.ip}',${it.port})">✕</button>` : "";
   const key = it.ip + ":" + it.port;
   const extUrl = (STATE.settings.ext_urls || {})[key];
   const scheme = HTTPS_PORTS.has(it.port) ? "https" : "http";
   const lanUrl = `${scheme}://${it.ip}:${it.port}`;
   const extCls = extUrl ? "ext active" : "ext";
-  const ext = `<button class="${extCls}" title="设置外网地址 (当前: ${esc(extUrl || "未配置")})" onclick="${stop}setExtUrl('${it.ip}',${it.port})">🌐</button>`;
+  const ext = `<button class="${extCls}" title="${t('setWan')} (${esc(extUrl || t('notSet'))})" onclick="${stop}setExtUrl('${it.ip}',${it.port})">🌐</button>`;
 
   let statsHtml = "";
   if (it.isDocker && it.container) {
@@ -1112,10 +1228,10 @@ function appCard(it){
     const stopped = ct.state && ct.state !== "running";
     const dockerPort = getDockerPortForHost(it.ip);
     const btn = stopped
-      ? `<button class="btn-ct-ctrl start" title="启动" style="margin-left:4px;font-size:10px" onclick="${stop}controlContainer('${it.ip}', ${dockerPort}, '${ct.id || ct.name}', 'start')">▶</button>`
-      : `<button class="btn-ct-ctrl stop" title="停止" style="margin-left:4px;font-size:10px" onclick="${stop}controlContainer('${it.ip}', ${dockerPort}, '${ct.id || ct.name}', 'stop')">⏹</button>`;
+      ? `<button class="btn-ct-ctrl start" title="${t('start')}" style="margin-left:4px;font-size:10px" onclick="${stop}controlContainer('${it.ip}', ${dockerPort}, '${ct.id || ct.name}', 'start')">▶</button>`
+      : `<button class="btn-ct-ctrl stop" title="${t('stop')}" style="margin-left:4px;font-size:10px" onclick="${stop}controlContainer('${it.ip}', ${dockerPort}, '${ct.id || ct.name}', 'stop')">⏹</button>`;
     statsHtml = (stopped
-      ? `<span class="ds-stopped">已停止</span>`
+      ? `<span class="ds-stopped">${t('stopped')}</span>`
       : renderDockerStats(ct)) + btn;
   }
 
@@ -1123,11 +1239,11 @@ function appCard(it){
   if (extUrl) {
     urlBlock = `
       <div class="app-url-line" onclick="event.stopPropagation();">
-        <span class="url-tag wan">WAN</span>
+        <span class="url-tag wan">${t('wanLabel')}</span>
         <a href="${esc(extUrl)}" target="_blank" rel="noopener">${esc(extUrl)}</a>
       </div>
       <div class="app-url-line" onclick="event.stopPropagation();">
-        <span class="url-tag lan">LAN</span>
+        <span class="url-tag lan">${t('lanLabel')}</span>
         <a class="lan-link" href="${esc(lanUrl)}" target="_blank" rel="noopener">${esc(lanUrl)}</a>
       </div>`;
   } else if (it.url) {
@@ -1143,8 +1259,8 @@ function appCard(it){
       style="--ac:${it.cat.color}; cursor: pointer;">
     <div class="acts" onclick="event.stopPropagation();" onmousedown="event.stopPropagation();">
       ${catSelect(it.ip,it.port,(STATE.settings.svc_cats||{})[it.ip+":"+it.port])}
-      <button class="pencil" title="重命名" onclick="${stop}renameSvc('${it.ip}',${it.port})">✎</button>
-      <button class="eye" title="${it.hidden?"显示":"隐藏"}" onclick="${stop}toggleHidden('${it.ip}',${it.port})">${it.hidden?"🚫":"👁"}</button>
+      <button class="pencil" title="${t('rename')}" onclick="${stop}renameSvc('${it.ip}',${it.port})">✎</button>
+      <button class="eye" title="${it.hidden?t('show'):t('hide')}" onclick="${stop}toggleHidden('${it.ip}',${it.port})">${it.hidden?"🚫":"👁"}</button>
       ${del}
       ${ext}
     </div>
@@ -1167,7 +1283,7 @@ function hostView(hosts, showHidden){
     return `<div class="card">
       <div class="top"><span class="dot"></span>
         <div style="flex:1;min-width:0">
-          <input class="label-input" placeholder="未命名设备" value="${esc(h.label||"")}"
+          <input class="label-input" placeholder="${t('device')}" value="${esc(h.label||"")}"
             onchange="saveLabel('${h.ip}',this.value)">
           <div class="ip">${h.ip}</div>
           ${sub?`<div class="host-sub">${sub}</div>`:""}
@@ -1176,7 +1292,7 @@ function hostView(hosts, showHidden){
       <div class="services">${svcs}</div>
     </div>`;
   }).filter(Boolean).join("");
-  return cards ? `<div class="grid">${cards}</div>` : `<div class="empty">没有非 Web 服务。所有已发现的服务都可以通过浏览器直接访问，已显示在「导航」中。</div>`;
+  return cards ? `<div class="grid">${cards}</div>` : `<div class="empty">${t('noNonWeb')}</div>`;
 }
 
 /* ---- settings modal ---- */
@@ -1192,6 +1308,7 @@ function openSettings(){
   document.getElementById("f_pn").checked=s.skip_discovery;
   document.getElementById("f_docker").checked=s.docker_probe;
   document.getElementById("f_mode").value=localStorage.getItem('ui_mode')||'auto';
+  document.getElementById("f_lang").value=LANG;
   const curStyle=localStorage.getItem('ui_style')||'cyberpunk';
   document.querySelectorAll('.theme-opt').forEach(el=>el.classList.toggle('on',el.id==='topt_'+curStyle));
   document.getElementById("overlay").classList.add("show");
@@ -1232,11 +1349,11 @@ function renderCatEditor(){
     <div class="cat-row" ondragover="dragOverCat(event)" ondrop="dropCat(event, ${i})">
       <div class="drag-handle" style="color:var(--muted);padding:0 4px;cursor:grab" draggable="true" ondragstart="dragCat(event, ${i})" ondragend="dragEndCat()">☰</div>
       <input type="color" value="${c.color}" onchange="EDIT_CATS[${i}].color=this.value">
-      <input type="text" value="${esc(c.name)}" placeholder="名称" oninput="EDIT_CATS[${i}].name=this.value">
-      <input type="text" value="${(c.ports||[]).join(',')}" placeholder="端口" oninput="EDIT_CATS[${i}].ports=this.value.split(',').map(x=>parseInt(x)).filter(Boolean)">
-      <input type="text" value="${(c.services||[]).join(',')}" placeholder="服务名" oninput="EDIT_CATS[${i}].services=this.value.split(',').map(x=>x.trim()).filter(Boolean)">
+      <input type="text" value="${esc(c.name)}" placeholder="${t('catName')}" oninput="EDIT_CATS[${i}].name=this.value">
+      <input type="text" value="${(c.ports||[]).join(',')}" placeholder="${t('catPorts')}" oninput="EDIT_CATS[${i}].ports=this.value.split(',').map(x=>parseInt(x)).filter(Boolean)">
+      <input type="text" value="${(c.services||[]).join(',')}" placeholder="${t('catSvcName')}" oninput="EDIT_CATS[${i}].services=this.value.split(',').map(x=>x.trim()).filter(Boolean)">
       <div style="display:flex;gap:4px;align-items:center">
-        <button class="mini" title="显示/隐藏" onclick="EDIT_CATS[${i}].visible=!EDIT_CATS[${i}].visible;renderCatEditor()">${c.visible!==false?"👁":"🚫"}</button>
+        <button class="mini" title="${t('show')}/${t('hide')}" onclick="EDIT_CATS[${i}].visible=!EDIT_CATS[${i}].visible;renderCatEditor()">${c.visible!==false?"👁":"🚫"}</button>
         <button class="mini" onclick="EDIT_CATS.splice(${i},1);renderCatEditor()">✕</button>
       </div>
     </div>`).join("");
@@ -1244,7 +1361,7 @@ function renderCatEditor(){
 function moveCat(i,d){ const j=i+d; if(j<0||j>=EDIT_CATS.length) return;
   [EDIT_CATS[i],EDIT_CATS[j]]=[EDIT_CATS[j],EDIT_CATS[i]];
   EDIT_CATS.forEach((c,k)=>c.order=k+1); renderCatEditor(); }
-function addCat(){ EDIT_CATS.push({id:"cat"+Date.now(),name:"新分类",color:"#888",
+function addCat(){ EDIT_CATS.push({id:"cat"+Date.now(),name:t('newCat'),color:"#888",
   order:EDIT_CATS.length+1,visible:true,ports:[],services:[]}); renderCatEditor(); }
 function saveSettingsForm(){
   EDIT_CATS.forEach((c,k)=>c.order=k+1);
@@ -1288,7 +1405,7 @@ function toggleMode() {
 }
 
 async function deleteSvc(ip, port) {
-  if (!confirm(`确认要删除 ${ip}:${port} 上的服务吗？`)) return;
+  if (!confirm(t('confirmDel', ip+':'+port))) return;
   try {
     const res = await fetch(`/api/host/${ip}/delete_service`, {
       method: "POST",
@@ -1302,22 +1419,22 @@ async function deleteSvc(ip, port) {
       }
       render();
     } else {
-      alert("删除服务失败");
+      alert(t('delFail'));
     }
   } catch (e) {
-    alert("删除服务发生错误");
+    alert(t('delErr'));
   }
 }
 
 async function addDockerAddressFromSettings(e) {
   if (e) { e.preventDefault(); e.stopPropagation(); }
-  const addr = prompt("请输入 Docker 守护进程地址（例如 10.1.6.15 或 10.1.6.15:2375）：");
+  const addr = prompt(t('dockerPrompt'));
   if (!addr || !addr.trim()) return;
   
   const btn = document.getElementById("addDockerBtn");
   const oldText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = "探测中…";
+  btn.textContent = t('probing');
   
   try {
     const res = await fetch("/api/docker/add", {
@@ -1327,7 +1444,7 @@ async function addDockerAddressFromSettings(e) {
     });
     const data = await res.json();
     if (res.ok && data.ok) {
-      alert(`成功连接到 Docker，发现 ${data.containers_count} 个容器！`);
+      alert(t('dockerOk', data.containers_count));
       const input = document.getElementById("f_docker_hosts");
       const current = input.value.trim();
       const clean_address = `${data.ip}:${data.port}`;
@@ -1336,10 +1453,10 @@ async function addDockerAddressFromSettings(e) {
       }
       load();
     } else {
-      alert(`添加 Docker 失败：${data.error || '未知错误'}`);
+      alert(t('dockerFail', data.error || 'unknown'));
     }
   } catch (e) {
-    alert("网络请求失败，请检查服务状态");
+    alert(t('netErr'));
   } finally {
     btn.disabled = false;
     btn.textContent = oldText;
@@ -1351,7 +1468,7 @@ function openAddSvc(){
   document.getElementById("f_svc_port").value = "";
   document.getElementById("f_svc_name").value = "";
   const sel = document.getElementById("f_svc_cat");
-  sel.innerHTML = '<option value="">默认（按端口自动匹配）</option>' +
+  sel.innerHTML = `<option value="">${t('defaultAuto')}</option>` +
     allCats().map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
   document.getElementById("svcOverlay").classList.add("show");
 }
@@ -1362,7 +1479,7 @@ async function submitAddSvc(){
   const name = document.getElementById("f_svc_name").value.trim();
   
   if(!ip || isNaN(port) || !name){
-    alert("请完整填写 IP、端口和服务名称");
+    alert(t('fillAll'));
     return;
   }
   
@@ -1379,16 +1496,16 @@ async function submitAddSvc(){
       closeAddSvc();
       load();
     } else {
-      alert("添加服务失败：" + (data.error || "未知错误"));
+      alert(t('addFail', data.error || 'unknown'));
     }
   } catch (e) {
-    alert("网络请求失败");
+    alert(t('netFail'));
   }
 }
 
 async function setExtUrl(ip, port){
   const key = ip + ":" + port, cur = (STATE.settings.ext_urls || {})[key] || "";
-  const url = prompt("请输入该服务的广域网/外网访问地址（例如 http://wan.myip.com:8080，留空清除）：", cur);
+  const url = prompt(t('wanPrompt'), cur);
   if (url === null) return;
   const u = { ... (STATE.settings.ext_urls || {}) };
   if (url.trim()) u[key] = url.trim(); else delete u[key];
@@ -1405,7 +1522,7 @@ function getDockerPortForHost(ip) {
 }
 
 async function controlContainer(ip, port, containerId, action) {
-  if (!confirm(`确认要${action==="start"?"启动":"停止"}容器吗？`)) return;
+  if (!confirm(t('confirmCtrl', action==="start"?t('start'):t('stop')))) return;
   const btn = event.currentTarget;
   const oldText = btn.innerHTML;
   btn.disabled = true;
@@ -1421,12 +1538,12 @@ async function controlContainer(ip, port, containerId, action) {
     if (res.ok && data.ok) {
       await load();
     } else {
-      alert(`操作失败：${data.error || "未知错误"}`);
+      alert(t('ctrlFail', data.error || 'unknown'));
       btn.disabled = false;
       btn.innerHTML = oldText;
     }
   } catch (e) {
-    alert("网络请求失败，请检查服务状态");
+    alert(t('netErr'));
     btn.disabled = false;
     btn.innerHTML = oldText;
   }
@@ -1435,6 +1552,7 @@ async function controlContainer(ip, port, containerId, action) {
 document.getElementById("search").addEventListener("input", render);
 document.addEventListener("focusout", ()=>{ if(_renderPending) setTimeout(()=>render(true), 80); });
 setMode(localStorage.getItem('ui_mode') || 'auto');
+setLang(LANG);
 load();
 </script>
 </body>
